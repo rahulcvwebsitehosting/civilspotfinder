@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zero-Waste Event Planner</title>
+<style>
+:root{--prime:#00c9a7;--sec:#ffd166;--danger:#ef476f;--dark:#1b1b2f;--light:#f8f9fa;--glass:rgba(255,255,255,.25);--shadow:0 8px 32px rgba(0,0,0,.15)}
+*{box-sizing:border-box;margin:0;padding:0;font-family:"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+body{background:linear-gradient(135deg,#00c9a7 0%,#92fe9d 100%);min-height:100vh;padding:20px}
+.container{max-width:700px;margin:0 auto}
+.card{background:var(--glass);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.3);border-radius:18px;padding:25px;margin:15px 0;box-shadow:var(--shadow);animation:fadeUp .6s}
+@keyframes fadeUp{from{opacity:0;transform:translateY(30px)}}
+h1,h2{color:var(--dark);margin:0 0 15px 0}
+h1{font-size:2rem;text-align:center}
+h2{font-size:1.5rem}
+label{display:block;margin:15px 0 5px;font-weight:600;color:var(--dark)}
+input[type="text"],input[type="number"],select{width:100%;padding:12px;border-radius:8px;border:1px solid rgba(0,0,0,.1);font-size:1rem;background:white}
+input[type="checkbox"]{margin-right:8px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin:15px 0}
+button{width:100%;padding:15px;border:none;border-radius:10px;background:var(--prime);color:#fff;font-size:1.1rem;font-weight:700;cursor:pointer;transition:all .25s;margin-top:10px}
+button:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,201,167,.4)}
+button:active{transform:translateY(0);box-shadow:0 2px 8px rgba(0,201,167,.4)}
+button:disabled{opacity:0.6;cursor:not-allowed;transform:none}
+#pickBtn{background:var(--sec);color:var(--dark);position:relative;overflow:hidden}
+#fileInput{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:10}
+.status-msg{text-align:center;font-weight:600;margin-top:15px;padding:10px;border-radius:8px;min-height:24px;white-space:pre-line;line-height:1.6}
+.success{background:rgba(0,201,167,.2);color:#00695c}
+.error{background:rgba(239,71,111,.2);color:#c62828}
+.info{background:rgba(255,209,102,.2);color:#f57c00}
+#imagePreview{max-width:100%;max-height:300px;margin:10px 0;border-radius:8px;display:none}
+.quick-select{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:15px 0}
+.quick-btn{padding:12px;background:white;border:2px solid var(--prime);color:var(--dark);border-radius:8px;cursor:pointer;font-weight:600;transition:.2s;border:none}
+.quick-btn:hover{background:var(--prime);color:white;transform:scale(1.05)}
+.experimental-badge{display:inline-block;background:#ff9800;color:white;padding:4px 8px;border-radius:5px;font-size:0.75rem;font-weight:700;margin-left:8px}
+.side-panel{position:fixed;right:-450px;top:0;width:450px;height:100vh;background:var(--glass);backdrop-filter:blur(12px);border-left:1px solid rgba(255,255,255,.3);box-shadow:var(--shadow);transition:right .3s;z-index:999;padding:20px;overflow-y:auto}
+.side-panel.open{right:0}
+.side-panel-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}
+.close-btn{background:var(--danger);color:white;border:none;padding:8px 15px;border-radius:8px;cursor:pointer;font-weight:600}
+.tab-container{display:flex;gap:10px;margin-bottom:15px}
+.tab-btn{flex:1;padding:10px;background:white;border:2px solid var(--prime);color:var(--dark);border-radius:8px;cursor:pointer;font-weight:600;transition:.2s}
+.tab-btn.active{background:var(--prime);color:white}
+.tab-content{display:none}
+.tab-content.active{display:block}
+.caption-output{background:white;padding:15px;border-radius:8px;margin:10px 0;min-height:150px;white-space:pre-wrap;border:1px solid rgba(0,0,0,.1);font-size:0.95rem}
+.copy-btn{background:var(--sec);color:var(--dark);padding:12px;border:none;border-radius:8px;cursor:pointer;font-weight:600;width:100%;margin-top:10px}
+.copy-btn:hover{background:#ffc233}
+.collapse-trigger{position:fixed;right:0;top:50%;transform:translateY(-50%);background:var(--prime);color:white;padding:15px 10px;border-radius:10px 0 0 10px;cursor:pointer;font-weight:700;writing-mode:vertical-rl;text-orientation:mixed;box-shadow:var(--shadow);transition:.3s;z-index:1000}
+.collapse-trigger:hover{padding-right:15px}
+.bus-panel{position:fixed;left:-450px;top:0;width:450px;height:100vh;background:var(--glass);backdrop-filter:blur(12px);border-right:1px solid rgba(255,255,255,.3);box-shadow:var(--shadow);transition:left .3s;z-index:998;padding:20px;overflow-y:auto}
+.bus-panel.open{left:0}
+.bus-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}
+.bus-close{background:var(--danger);color:white;border:none;padding:8px 15px;border-radius:8px;cursor:pointer;font-weight:600}
+.bus-route{margin-bottom:20px;background:rgba(255,255,255,.3);padding:15px;border-radius:10px}
+.bus-route h3{margin-bottom:10px;color:var(--dark)}
+.bus-table{width:100%;border-collapse:collapse;font-size:0.85rem;background:white;border-radius:8px}
+.bus-table th,.bus-table td{padding:8px;border:1px solid rgba(0,0,0,.1);text-align:left}
+.bus-table th{background:rgba(0,201,167,.3);font-weight:600}
+.bus-left-trigger{position:fixed;left:0;top:50%;transform:translateY(-50%);background:var(--sec);color:var(--dark);padding:15px 10px;border-radius:0 10px 10px 0;cursor:pointer;font-weight:700;writing-mode:vertical-rl;text-orientation:mixed;box-shadow:var(--shadow);transition:.3s;z-index:997}
+.bus-left-trigger:hover{padding-left:15px}
+@media(max-width:768px){.side-panel,.bus-panel{width:100%}.side-panel{right:-100%}.bus-panel{left:-100%}}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="card">
+    <h1>Zero-Waste Event Planner</h1>
+    <label for="ename">Event name</label>
+    <input type="text" id="ename" placeholder="e.g. TechFest 2025">
+    <div class="grid">
+      <div>
+        <label for="att">Expected attendees</label>
+        <input type="number" id="att" min="1" value="200">
+      </div>
+      <div>
+        <label for="meal">Meal type</label>
+        <select id="meal">
+          <option value="snacks">Snacks only</option>
+          <option value="breakfast">Breakfast</option>
+          <option value="lunch">Lunch</option>
+          <option value="dinner">Dinner</option>
+        </select>
+      </div>
+    </div>
+    <label>Quick Select Common Sizes:</label>
+    <div class="quick-select">
+      <button class="quick-btn" type="button" onclick="setAttendees(50)">50</button>
+      <button class="quick-btn" type="button" onclick="setAttendees(100)">100</button>
+      <button class="quick-btn" type="button" onclick="setAttendees(200)">200</button>
+      <button class="quick-btn" type="button" onclick="setAttendees(500)">500</button>
+      <button class="quick-btn" type="button" onclick="setAttendees(1000)">1000</button>
+      <button class="quick-btn" type="button" onclick="setAttendees(2000)">2000+</button>
+    </div>
+    <label><input type="checkbox" id="oil"> Has fried food / oil</label>
+    <label><input type="checkbox" id="liq"> Has liquid refreshment</label>
+  </div>
+
+  <div class="card">
+    <h2>AI Photo Counter <span class="experimental-badge">EXPERIMENTAL</span></h2>
+    <p style="color:var(--dark);margin-bottom:15px;font-size:0.9rem">Upload crowd photo for AI counting</p>
+    <div style="position:relative">
+      <button id="pickBtn" type="button">
+        Choose Photo
+        <input type="file" id="fileInput" accept="image/*">
+      </button>
+    </div>
+    <img id="imagePreview" alt="Preview">
+    <div id="aiStatus" class="status-msg"></div>
+  </div>
+
+  <button id="genBtn" type="button">Generate Zero-Waste Plan</button>
+  <div id="planStatus" class="status-msg"></div>
+</div>
+
+<div class="collapse-trigger" onclick="togglePanel()">Caption AI</div>
+<div id="sidePanel" class="side-panel">
+  <div class="side-panel-header">
+    <h2>Caption Generator</h2>
+    <button class="close-btn" onclick="togglePanel()">Close</button>
+  </div>
+  <div class="tab-container">
+    <button class="tab-btn active" onclick="switchTab('insta')">Instagram</button>
+    <button class="tab-btn" onclick="switchTab('twitter')">Twitter</button>
+    <button class="tab-btn" onclick="switchTab('linkedin')">LinkedIn</button>
+  </div>
+  <div id="insta" class="tab-content active">
+    <button class="quick-btn" onclick="generateCaption('insta')">Generate Caption</button>
+    <div id="instaOut" class="caption-output">Click to generate Instagram caption</div>
+    <button class="copy-btn" onclick="copyCaption('instaOut')">Copy</button>
+  </div>
+  <div id="twitter" class="tab-content">
+    <button class="quick-btn" onclick="generateCaption('twitter')">Generate Tweet</button>
+    <div id="twitterOut" class="caption-output">Click to generate tweet</div>
+    <button class="copy-btn" onclick="copyCaption('twitterOut')">Copy</button>
+  </div>
+  <div id="linkedin" class="tab-content">
+    <button class="quick-btn" onclick="generateCaption('linkedin')">Generate Post</button>
+    <div id="linkedinOut" class="caption-output">Click to generate LinkedIn post</div>
+    <button class="copy-btn" onclick="copyCaption('linkedinOut')">Copy</button>
+  </div>
+</div>
+
+<div class="bus-left-trigger" onclick="toggleBusPanel()">Buses</div>
+<div id="busPanel" class="bus-panel">
+  <div class="bus-header">
+    <h2>Public Transport</h2>
+    <button class="bus-close" onclick="toggleBusPanel()">Close</button>
+  </div>
+  <div id="busRoutesContainer"></div>
+  <button class="quick-btn" onclick="addCustomRoute()" style="margin-top:15px;background:var(--prime);color:white">+ Add Custom Route</button>
+</div>
+
+<script>
+(function() {
+  'use strict';
+  const API_KEY = 'AIzaSyDIhRpfpg5waAWK5mORNiwP3eKq6IDFxm8';
+  const fileInput = document.getElementById('fileInput');
+  const imagePreview = document.getElementById('imagePreview');
+  const aiStatus = document.getElementById('aiStatus');
+  const planStatus = document.getElementById('planStatus');
+  const attInput = document.getElementById('att');
+
+  fileInput.addEventListener('change', async function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    aiStatus.textContent = 'Analyzing...';
+    aiStatus.className = 'status-msg info';
+    try {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        imagePreview.src = e.target.result;
+        imagePreview.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+      const base64 = await fileToBase64(file);
+      const base64Data = base64.split(',')[1];
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{
+            parts: [
+              { text: "Count exact number of people. Reply ONLY with the number." },
+              { inline_data: { mime_type: file.type, data: base64Data } }
+            ]
+          }]
+        })
+      });
+      if (!response.ok) throw new Error('API failed');
+      const data = await response.json();
+      const text = data.candidates[0].content.parts[0].text.trim();
+      const count = parseInt(text.match(/\d+/)?.[0] || '0');
+      if (count > 0) {
+        attInput.value = count;
+        aiStatus.textContent = `Detected ${count} people!`;
+        aiStatus.className = 'status-msg success';
+      } else {
+        aiStatus.textContent = 'No people detected';
+        aiStatus.className = 'status-msg error';
+      }
+    } catch (err) {
+      aiStatus.textContent = `Error: ${err.message}`;
+      aiStatus.className = 'status-msg error';
+    }
+  });
+
+  function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  window.setAttendees = function(num) {
+    attInput.value = num;
+    planStatus.textContent = `Set to ${num} attendees`;
+    planStatus.className = 'status-msg success';
+    setTimeout(() => { planStatus.textContent = ''; planStatus.className = 'status-msg'; }, 2000);
+  };
+
+  document.getElementById('genBtn').addEventListener('click', function(e) {
+    e.preventDefault();
+    const n = parseInt(attInput.value);
+    if (!n || n < 1) {
+      planStatus.textContent = 'Please enter valid attendees';
+      planStatus.className = 'status-msg error';
+      return;
+    }
+    const eventName = document.getElementById('ename').value.trim() || 'Your Event';
+    const mealType = document.getElementById('meal').value;
+    const hasOil = document.getElementById('oil').checked;
+    const hasLiquid = document.getElementById('liq').checked;
+    const plates = Math.ceil(n * 1.1);
+    const cups = hasLiquid ? Math.ceil(n * 1.15) : 0;
+    const napkins = Math.ceil(n * 1.2);
+    const oilBags = hasOil ? Math.ceil(n / 50) : 0;
+    const trashBags = Math.ceil(n / 100);
+    const compostBags = Math.ceil(n / 75);
+    const plateCost = (plates * 3).toFixed(2);
+    const cupCost = hasLiquid ? (cups * 2).toFixed(2) : 0;
+    const napkinCost = (napkins * 0.50).toFixed(2);
+    const totalCost = (parseFloat(plateCost) + parseFloat(cupCost) + parseFloat(napkinCost)).toFixed(2);
+    let plan = `✅ ZERO-WASTE PLAN GENERATED! 🌿\n\n`;
+    plan += `━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+    plan += `📋 Event: ${eventName}\n`;
+    plan += `👥 Attendees: ${n} people\n`;
+    plan += `🍽️ Meal: ${mealType.charAt(0).toUpperCase() + mealType.slice(1)}\n`;
+    plan += `━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+    plan += `📦 REQUIRED SUPPLIES:\n\n`;
+    plan += `🍽️ Compostable Plates: ${plates}\n   💰 Cost: ₹${plateCost}\n   ✓ 10% buffer\n\n`;
+    if (hasLiquid) {
+      plan += `☕ Compostable Cups: ${cups}\n   💰 Cost: ₹${cupCost}\n   ✓ 15% buffer\n\n`;
+    }
+    plan += `🧻 Napkins: ${napkins}\n   💰 Cost: ₹${napkinCost}\n   ✓ 20% buffer\n\n`;
+    if (hasOil) plan += `🛢️ Oil Bags: ${oilBags}\n\n`;
+    plan += `♻️ Compost Bags: ${compostBags}\n`;
+    plan += `🗑️ Recycling Bins: ${trashBags}\n\n`;
+    plan += `━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+    plan += `💰 TOTAL: ₹${totalCost}\n`;
+    plan += `━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+    plan += `🌱 TIPS:\n✓ Use banana leaves/areca plates\n✓ Steel tumblers for beverages\n✓ Set up labeled waste stations\n✓ Partner with composting facility\n\n`;
+    plan += `🌍 Every small step counts! 🌿`;
+    planStatus.textContent = plan;
+    planStatus.className = 'status-msg success';
+    planStatus.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  });
+})();
+
+function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+const templates = {
+  insta: () => `🌿 Zero-Waste Event Success! 🎉\n\nJust planned sustainable event for ${randInt(50, 2000)} attendees in Tamil Nadu!\n\n✅ Banana leaf plates\n✅ Steel tumblers\n✅ Zero plastic\n\n${rand(["Together we save our planet! 🌍", "Small steps, big impact! 💚", "Sustainability is our duty! ♻️"])}\n\n#ZeroWaste #SustainableIndia #EcoFriendly #TamilNadu #GreenIndia #PlasticFreeIndia`,
+  twitter: () => `🌱 Zero-waste event in TN!\n\n${randInt(50, 2000)} attendees\n✅ Banana leaves\n✅ Steel tumblers\n✅ 100% compostable\n\n${rand(["Small steps → Big change 🌍", "Every event counts! 💚", "Green is cool ♻️"])}\n\n#ZeroWaste #SustainableIndia #GreenTN`,
+  linkedin: () => `🌿 Sustainable Event Success in Tamil Nadu\n\nOrganized zero-waste event for ${randInt(50, 2000)} attendees.\n\n📊 Results:\n• 100% plastic-free\n• Banana leaves & areca plates\n• Steel tumblers for beverages\n• 70% waste reduction\n• ₹${randInt(5000, 50000)} cost savings\n\nSustainability is economically smart! 🇮🇳\n\n#Sustainability #ZeroWaste #India #TamilNadu #GreenBusiness #ESG`
+};
+function generateCaption(p) {
+  const out = document.getElementById(p + 'Out');
+  out.textContent = 'Creating...';
+  setTimeout(() => { out.textContent = templates[p](); }, 300);
+}
+function copyCaption(id) {
+  navigator.clipboard.writeText(document.getElementById(id).textContent).then(() => alert('Copied!'));
+}
+function togglePanel() { document.getElementById('sidePanel').classList.toggle('open'); }
+function toggleBusPanel() { document.getElementById('busPanel').classList.toggle('open'); }
+function switchTab(p) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.getElementById(p).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// BUS ROUTES SYSTEM
+const defaultBusData = {
+  'Erode → Thudupathi': [
+    {time:'06:00 AM',bus:'12A'},{time:'07:15 AM',bus:'Swami'},{time:'07:50 AM',bus:'12B'},
+    {time:'01:30 PM',bus:'Swami'},{time:'03:20 PM',bus:'12D'},{time:'04:00 PM',bus:'12B'},
+    {time:'05:30 PM',bus:'Swami'},{time:'06:00 PM',bus:'12A'},{time:'06:45 PM',bus:'12B'}
+  ],
+  'Thudupathi → Erode': [
+    {time:'04:30 AM',bus:'12D'},{time:'06:10 AM',bus:'Swami'},{time:'06:55 AM',bus:'12A'},
+    {time:'08:40 AM',bus:'Dhanalaxmi'},{time:'09:00 AM',bus:'12B'},{time:'12:45 PM',bus:'Swami'},
+    {time:'04:30 PM',bus:'Swami'},{time:'05:10 PM',bus:'12B'},{time:'07:00 PM',bus:'12A'}
+  ],
+  'Perundurai → Thudupathi': [
+    {time:'05:15 AM',bus:'7D'},{time:'05:30 AM',bus:'37'},{time:'06:10 AM',bus:'P3'},
+    {time:'06:30 AM',bus:'Dhanalaxmi'},{time:'06:40 AM',bus:'7A'},{time:'07:40 AM',bus:'10A'},
+    {time:'08:10 AM',bus:'Swami'},{time:'09:30 AM',bus:'P3'},{time:'10:15 AM',bus:'7A'}
+  ],
+  'Thudupathi → Perundurai': [
+    {time:'10:30 AM',bus:'Swami'},{time:'10:50 AM',bus:'P3'},{time:'11:10 AM',bus:'7A'},
+    {time:'12:15 PM',bus:'P3'},{time:'01:00 PM',bus:'7A'},{time:'02:00 PM',bus:'P10A'},
+    {time:'03:05 PM',bus:'P3'},{time:'04:10 PM',bus:'12D'}
+  ]
+};
+
+// Load saved data or default, but always ensure default routes exist
+let busData = JSON.parse(localStorage.getItem('busRoutes')) || {};
+Object.keys(defaultBusData).forEach(route => {
+  if (!busData[route]) {
+    busData[route] = defaultBusData[route];
+  }
+});
+
+function renderBusRoutes() {
+  const container = document.getElementById('busRoutesContainer');
+  container.innerHTML = '';
+  
+  // Define order of routes (Custom Routes removed from defaults)
+  const routeOrder = ['Erode → Thudupathi', 'Thudupathi → Erode', 'Perundurai → Thudupathi', 'Thudupathi → Perundurai'];
+  const customRoutes = Object.keys(busData).filter(r => !routeOrder.includes(r));
+  const orderedRoutes = [...routeOrder, ...customRoutes].filter(r => busData[r]);
+  
+  orderedRoutes.forEach(routeName => {
+    const isDefault = routeOrder.includes(routeName);
+    const routeDiv = document.createElement('div');
+    routeDiv.className = 'bus-route';
+    routeDiv.innerHTML = `
+      <h3>${routeName} ${!isDefault ? `<button onclick="deleteRoute('${routeName}')" style="background:var(--danger);color:white;border:none;padding:4px 8px;border-radius:5px;cursor:pointer;font-size:0.8rem;float:right">Delete</button>` : ''}</h3>
+      <table class="bus-table">
+        <tr><th>Time</th><th>Bus</th></tr>
+        ${busData[routeName].map((item, idx) => `
+          <tr>
+            <td contenteditable="true" data-route="${routeName}" data-idx="${idx}" data-field="time">${item.time}</td>
+            <td contenteditable="true" data-route="${routeName}" data-idx="${idx}" data-field="bus">${item.bus}</td>
+          </tr>
+        `).join('')}
+      </table>
+      <button onclick="addBusToRoute('${routeName}')" style="background:var(--sec);color:var(--dark);border:none;padding:6px 12px;border-radius:5px;cursor:pointer;margin-top:8px;font-size:0.85rem">+ Add Bus</button>
+    `;
+    container.appendChild(routeDiv);
+  });
+  
+  // Add blur event to save edits
+  document.querySelectorAll('td[contenteditable="true"]').forEach(cell => {
+    cell.addEventListener('blur', function() {
+      const route = this.dataset.route;
+      const idx = parseInt(this.dataset.idx);
+      const field = this.dataset.field;
+      busData[route][idx][field] = this.textContent.trim();
+      saveBusData();
+    });
+  });
+}
+
+function saveBusData() {
+  localStorage.setItem('busRoutes', JSON.stringify(busData));
+}
+
+function addCustomRoute() {
+  const routeName = prompt('Enter route name (e.g., "TNagar → Mylapore"):');
+  if (!routeName || routeName.trim() === '') return;
+  
+  const newRoute = routeName.trim();
+  
+  // Check if route already exists
+  if (busData[newRoute]) {
+    alert('Route already exists!');
+    return;
+  }
+  
+  // Create new route with one default bus
+  busData[newRoute] = [{time: '08:00 AM', bus: 'Bus 1'}];
+  saveBusData();
+  renderBusRoutes();
+}
+
+function deleteRoute(routeName) {
+  // Prevent deletion of default routes
+  const defaultRoutes = ['Erode → Thudupathi', 'Thudupathi → Erode', 'Perundurai → Thudupathi', 'Thudupathi → Perundurai'];
+  if (defaultRoutes.includes(routeName)) {
+    alert('Cannot delete default routes. You can only edit them or add new custom routes.');
+    return;
+  }
+  if (confirm(`Delete entire route "${routeName}"?`)) {
+    delete busData[routeName];
+    saveBusData();
+    renderBusRoutes();
+  }
+}
+
+function addBusToRoute(routeName) {
+  const time = prompt('Enter departure time (e.g., 09:30 AM):') || '08:00 AM';
+  const bus = prompt('Enter bus name/number:') || 'Bus';
+  busData[routeName].push({time, bus});
+  saveBusData();
+  renderBusRoutes();
+}
+
+function deleteBus(routeName, idx) {
+  busData[routeName].splice(idx, 1);
+  saveBusData();
+  renderBusRoutes();
+}
+
+// Initialize bus routes on load
+window.addEventListener('DOMContentLoaded', renderBusRoutes);
+</script>
+</body>
+</html>
