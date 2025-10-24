@@ -1,283 +1,267 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Greenify Event Maestro</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/feather-icons"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.18.0/dist/tf.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.waves.min.js"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: {
-                            100: '#e0f2f1', 200: '#b2dfdb', 300: '#80cbc4', 400: '#4db6ac',
-                            500: '#26a69a', 600: '#009688', 700: '#00897b', 800: '#00796b', 900: '#00695c',
-                        },
-                        secondary: {
-                            100: '#f1f8e9', 200: '#dcedc8', 300: '#c5e1a5', 400: '#aed581',
-                            500: '#9ccc65', 600: '#8bc34a', 700: '#7cb342', 800: '#689f38', 900: '#558b2f',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Poppins', sans-serif; }
-        .glass-card {
-            background: rgba(255, 255, 255, 0.25);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.18);
-        }
-        .animate-float { animation: float 6s ease-in-out infinite; }
-        @keyframes float { 0%,100% { transform: translateY(0px); } 50% { transform: translateY(-15px); } }
-    </style>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>India Civil Spot Finder</title>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD9IV-6PxGkSylyQYSUdp4l6IlqZsiMLig&libraries=places,geometry&callback=initMap" async defer></script>
+  <!-- Google Translate -->
+  <script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+  <style>
+    :root{
+      --b:#0288d1;--g:#388e3c;--o:#f57c00;--p:#7b1fa2;
+      --game:#00a5a5;--gameText:#fff;--credit:#ff8f00;
+      --bar:#ffffff;--barBorder:#d0d0d0;--shadow:0 2px 6px rgba(0,0,0,.12);
+    }
+    /* DARK-MODE OVERRIDE */
+    body.dark{
+      --bar:#1e1e1e;--barBorder:#333;--shadow:0 2px 8px rgba(0,0,0,.4);
+      background:#121212;color:#e3e3e3;
+    }
+    body.dark #side{background:#1e1e1e;border-color:#333}
+    body.dark .card{background:#2a2a2a;border-color:#444;color:#e3e3e3}
+    body.dark .tag{background:#444;color:#ccc}
+    body.dark #searchWrap{background:#2a2a2a;border-color:#555}
+    body.dark input{color:#e3e3e3}
+
+    html,body{height:100%;margin:0;font-family:Roboto,Arial;font-size:14px;transition:background .3s,color .3s}
+    /* top-bar */
+    #topbar{position:fixed;top:0;left:0;right:0;height:56px;background:var(--bar);border-bottom:1px solid var(--barBorder);box-shadow:var(--shadow);display:flex;align-items:center;gap:8px;padding:0 14px;z-index:1000}
+    #searchWrap{flex:1;height:36px;display:flex;align-items:stretch;background:#f3f3f3;border:1px solid #ccc;border-radius:18px;overflow:hidden;max-width:520px;margin:0 auto}
+    body.dark #searchWrap{background:#2a2a2a;border-color:#555}
+    #searchWrap input{flex:1;border:none;background:transparent;padding:0 12px;font-size:14px;outline:none}
+    #searchWrap button{border:none;background:var(--b);color:#fff;padding:0 14px;cursor:pointer;font-size:14px}
+    #locBtn{position:relative;border:none;background:var(--g);color:#fff;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:16px}
+    #locBtn::after{content:"Use your location to zoom the map";position:absolute;bottom:-32px;left:50%;transform:translateX(-50%);background:#333;color:#fff;font-size:11px;padding:4px 8px;border-radius:4px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s}
+    #locBtn:hover::after{opacity:1}
+    /* translate */
+    #google_translate_element{margin-left:auto}
+    /* dark-toggle */
+    #darkToggle{margin-left:8px;background:transparent;border:none;font-size:20px;cursor:pointer}
+    .legend{margin-left:auto;font-size:11px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+    .legend span{display:flex;align-items:center;gap:3px}
+    .dot{display:inline-block;width:10px;height:10px;border-radius:50%}
+    #toggleBtnBar{cursor:pointer;background:var(--g);color:#fff;border:none;padding:4px 7px;border-radius:3px;font-size:12px;margin-left:8px}
+    /* layout */
+    #wrap{display:flex;height:calc(100% - 56px);margin-top:56px}
+    #map{flex:1;height:100%;transition:width .3s}
+    #side{width:380px;max-width:100%;height:100%;background:#f5f5f5;border-left:1px solid #ccc;display:flex;flex-direction:column;transition:width .3s;overflow:hidden}
+    body.dark #side{background:#1e1e1e;border-color:#333}
+    #side.hide{width:0;border:0}
+    #sideHeader{flex-shrink:0;padding:8px 12px;background:#e0e0e0;display:flex;justify-content:space-between;align-items:center}
+    body.dark #sideHeader{background:#2a2a2a}
+    #sideHeader h3{margin:0;font-size:15px}
+    #sideContent{flex:1;overflow-y:auto;padding:0 12px 12px}
+    .card{background:#fff;border:1px solid #ddd;border-radius:6px;padding:10px;margin-bottom:10px}
+    .card h4{margin:0 0 6px;font-size:14px}
+    .card p{margin:4px 0;font-size:12px;color:#333}
+    body.dark .card p{color:#e3e3e3}
+    .tag{display:inline-block;background:#e0e0e0;color:#555;padding:2px 5px;border-radius:3px;font-size:11px;margin:2px 2px 0 0}
+    .btnLi{display:inline-block;margin-top:8px;padding:8px 14px;background:var(--b);color:#fff;text-decoration:none;border-radius:4px;font-weight:bold}
+    /* bubble animations */
+    .bubble{border:none;border-radius:20px;position:relative;overflow:hidden;animation:float 4s ease-in-out infinite}
+    .bubble::before{content:"";position:absolute;width:200%;height:200%;top:-50%;left:-50%;background:radial-gradient(circle,rgba(255,255,255,.25) 0%,rgba(255,255,255,0) 60%);transform:rotate(30deg);animation:shine 6s ease-in-out infinite}
+    @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+    @keyframes shine{0%{transform:translateX(-100%) translateY(-100%) rotate(30deg)}100%{transform:translateX(100%) translateY(100%) rotate(30deg)}}
+    /* mobile */
+    @media (max-width:600px){
+      #wrap{flex-direction:column}
+      #side{width:100%;height:40vh;border-left:none;border-top:1px solid #ccc}
+      #side.hide{height:0}
+      .legend{font-size:10px;gap:4px}
+    }
+  </style>
 </head>
-<body class="bg-gradient-to-br from-primary-200 to-primary-400 min-h-screen" id="vanta-bg">
-<div class="container mx-auto px-4 py-8">
-    <header class="text-center mb-8">
-        <div class="inline-block p-4 rounded-full bg-white/20 backdrop-blur-md mb-4 animate-float"><i data-feather="leaf" class="w-12 h-12 text-primary-700"></i></div>
-        <h1 class="text-4xl font-bold text-gray-800 mb-2">Greenify Event Maestro</h1>
-        <p class="text-lg text-gray-700">Plan sustainable events with eco-conscious precision</p>
-    </header>
 
-    <!-- Event Details -->
-    <div class="glass-card rounded-2xl shadow-xl p-6 mb-8 max-w-3xl mx-auto">
-        <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center"><i data-feather="calendar" class="mr-2"></i> Event Details</h2>
-        <div class="space-y-4">
-            <div>
-                <label class="block text-gray-700 mb-2 font-medium">Event Name</label>
-                <input id="ename" type="text" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent" placeholder="e.g. Eco Conference 2023">
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-gray-700 mb-2 font-medium">Expected Attendees</label>
-                    <input id="att" type="number" min="1" value="100" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
-                </div>
-                <div>
-                    <label class="block text-gray-700 mb-2 font-medium">Meal Type</label>
-                    <select id="meal" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
-                        <option>Snacks Only</option><option>Breakfast</option><option selected>Lunch</option><option>Dinner</option><option>Full Day</option>
-                    </select>
-                </div>
-            </div>
-            <div>
-                <label class="block text-gray-700 mb-2 font-medium">Quick Select</label>
-                <div class="grid grid-cols-3 sm:grid-cols-6 gap-2">
-                    <button class="qs-btn bg-primary-500 hover:bg-primary-600 text-white py-2 px-3 rounded-lg transition-all">50</button>
-                    <button class="qs-btn bg-primary-500 hover:bg-primary-600 text-white py-2 px-3 rounded-lg transition-all">100</button>
-                    <button class="qs-btn bg-primary-500 hover:bg-primary-600 text-white py-2 px-3 rounded-lg transition-all">200</button>
-                    <button class="qs-btn bg-primary-500 hover:bg-primary-600 text-white py-2 px-3 rounded-lg transition-all">500</button>
-                    <button class="qs-btn bg-primary-500 hover:bg-primary-600 text-white py-2 px-3 rounded-lg transition-all">1000</button>
-                    <button class="qs-btn bg-primary-500 hover:bg-primary-600 text-white py-2 px-3 rounded-lg transition-all">2000+</button>
-                </div>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <label class="inline-flex items-center"><input id="oil" type="checkbox" class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50"><span class="ml-2 text-gray-700">Has fried food / oil</span></label>
-                <label class="inline-flex items-center"><input id="liq" type="checkbox" class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50"><span class="ml-2 text-gray-700">Has liquid refreshment</span></label>
-            </div>
-        </div>
+<body>
+  <div id="topbar">
+    <button id="locBtn" onclick="getUserLocation()" aria-label="Use my location">📍</button>
+
+    <div id="searchWrap">
+      <input id="cityInput" placeholder="City name" type="text"/>
+      <button onclick="searchCity()">🔍</button>
     </div>
 
-    <!-- AI Crowd Counter -->
-    <div class="glass-card rounded-2xl shadow-xl p-6 mb-8 max-w-3xl mx-auto">
-        <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center"><i data-feather="camera" class="mr-2"></i> AI Crowd Counter</h2>
-        <div class="text-center">
-            <div class="relative inline-block mb-4">
-                <button class="bg-secondary-500 hover:bg-secondary-600 text-white font-medium py-3 px-6 rounded-lg transition-all flex items-center"><i data-feather="upload" class="mr-2"></i> Upload Crowd Photo</button>
-                <input id="crowdFile" type="file" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
-            </div>
-            <div id="aiCounterPreview" class="border-2 border-dashed border-gray-300 rounded-xl p-4 mb-4"><i data-feather="image" class="w-16 h-16 text-gray-400 mx-auto"></i><p class="text-gray-500 mt-2">Preview will appear here</p></div>
-            <div id="aiCounterStatus" class="bg-primary-100 text-primary-800 py-2 px-4 rounded-lg inline-block"><i data-feather="loader" class="animate-spin inline mr-2"></i><span>Ready to analyze</span></div>
-        </div>
+    <div id="google_translate_element"></div>
+    <button id="darkToggle" onclick="toggleDark()" title="Toggle dark mode">🌙</button>
+
+    <div class="legend">
+      <span><span class="dot" style="background:var(--b)"></span>Construction</span>
+      <span><span class="dot" style="background:var(--g)"></span>Consult/Lab</span>
+      <span><span class="dot" style="background:var(--o)"></span>Equipment</span>
+      <span><span class="dot" style="background:var(--p)"></span>Tech</span>
     </div>
 
-    <!-- Generate Button -->
-    <div class="text-center mb-8">
-        <button id="generateBtn" class="bg-gradient-to-r from-primary-600 to-secondary-600 hover:from-primary-700 hover:to-secondary-700 text-white font-bold py-4 px-8 rounded-full shadow-lg transform hover:scale-105 transition-all duration-300 flex items-center mx-auto"><i data-feather="zap" class="mr-2"></i> Generate Zero-Waste Plan</button>
-    </div>
+    <button id="toggleBtnBar" onclick="toggleSide()">⊟ Hide details</button>
+  </div>
 
-    <!-- Waste Verification -->
-    <div id="wasteVerification" class="glass-card rounded-2xl shadow-xl p-6 mb-8 max-w-3xl mx-auto">
-        <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center"><i data-feather="check-circle" class="mr-2"></i> Waste Verification</h2>
-        <div class="text-center">
-            <div class="relative inline-block mb-4">
-                <button class="bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-6 rounded-lg transition-all flex items-center"><i data-feather="upload" class="mr-2"></i> Upload Waste Photo</button>
-                <input id="wasteFile" type="file" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
-            </div>
-            <div id="wastePreview" class="border-2 border-dashed border-gray-300 rounded-xl p-4 mb-4"><i data-feather="image" class="w-16 h-16 text-gray-400 mx-auto"></i><p class="text-gray-500 mt-2">Upload photo of waste collected</p></div>
-            <div id="wasteStatus" class="bg-primary-100 text-primary-800 py-2 px-4 rounded-lg inline-block"><i data-feather="loader" class="animate-spin inline mr-2"></i><span>Ready to analyze</span></div>
-            <div id="wasteAnalysis" class="hidden">
-                <div class="bg-white/70 rounded-xl p-6 mb-4"><h3 class="font-medium text-gray-800 mb-2">Waste Composition Analysis</h3><div class="h-4 bg-gray-200 rounded-full mb-2"><div class="h-full bg-green-500 rounded-full" style="width: 75%"></div></div><div class="flex justify-between text-sm text-gray-600"><span>75% Biodegradable</span><span>25% Plastic/Non-recyclable</span></div></div>
-                <div class="bg-primary-100 rounded-xl p-4"><h3 class="font-medium text-primary-800 mb-1">Your Green Score</h3><div class="text-3xl font-bold text-primary-600">85/100</div><p class="text-sm text-primary-700 mt-1">Excellent sustainability effort!</p></div>
-            </div>
-        </div>
+  <div id="wrap">
+    <div id="map"></div>
+    <div id="side" class="">
+      <div id="sideHeader">
+        <h3>Company Details</h3>
+      </div>
+      <div id="sideContent"></div>
     </div>
+  </div>
 
-    <!-- Results -->
-    <div id="results" class="glass-card rounded-2xl shadow-xl p-6 mb-8 max-w-3xl mx-auto hidden">
-        <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center"><i data-feather="check-circle" class="mr-2 text-green-500"></i> Your Zero-Waste Plan</h2>
-        <div class="bg-white/70 rounded-xl p-6 space-y-6">
-            <div class="flex items-start"><div class="bg-primary-100 p-2 rounded-full mr-3"><i data-feather="clipboard" class="text-primary-600"></i></div><div><h3 class="font-medium text-gray-800">Event Overview</h3><p id="resOverview" class="text-gray-600">Loading event details...</p></div></div>
-            <div class="flex items-start"><div class="bg-secondary-100 p-2 rounded-full mr-3"><i data-feather="shopping-bag" class="text-secondary-600"></i></div><div><h3 class="font-medium text-gray-800">Required Supplies</h3><ul id="resSupplies" class="list-disc list-inside text-gray-600 space-y-1"></ul></div></div>
-            <div class="flex items-start"><div class="bg-primary-100 p-2 rounded-full mr-3"><i data-feather="dollar-sign" class="text-primary-600"></i></div><div><h3 class="font-medium text-gray-800">Estimated Costs</h3><p id="resTotal" class="text-gray-600">Total: ₹0</p><div class="mt-2 bg-blue-50 p-3 rounded-lg"><h4 class="font-medium text-blue-800 mb-1">Cost Breakdown</h4><ul id="resBreak" class="text-sm space-y-1"></ul></div></div></div>
-            <div class="flex items-start"><div class="bg-secondary-100 p-2 rounded-full mr-3"><i data-feather="lightbulb" class="text-secondary-600"></i></div><div><h3 class="font-medium text-gray-800">AI-Generated Eco Recommendations</h3><div class="mb-4"><h4 class="text-sm font-medium text-gray-700 mb-1">Nearby Waste Vendors</h4><div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2"><div class="bg-white p-2 rounded-lg border border-gray-200"><div class="flex justify-between"><span class="font-medium">Green Compost Co.</span><span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">4.8 ★</span></div><p class="text-xs text-gray-600">1.2km away • ₹500 pickup</p></div><div class="bg-white p-2 rounded-lg border border-gray-200"><div class="flex justify-between"><span class="font-medium">Eco Recycle Hub</span><span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">4.5 ★</span></div><p class="text-xs text-gray-600">2.5km away • ₹300 pickup</p></div></div></div><div><h4 class="text-sm font-medium text-gray-700 mb-1">Smart Suggestions</h4><ul class="list-disc list-inside text-gray-600 space-y-1"><li>Use banana leaves for authentic eco-friendly serving</li><li>Set up clearly labeled waste stations (compost, recycling, landfill)</li><li>Partner with local composting facility for waste processing</li><li>Encourage attendees to bring reusable water bottles</li><li>Use digital tickets to reduce paper waste</li><li>Provide bike parking to encourage sustainable transport</li></ul></div></div></div>
-            <div class="flex items-start"><div class="bg-primary-100 p-2 rounded-full mr-3"><i data-feather="bar-chart-2" class="text-primary-600"></i></div><div><h3 class="font-medium text-gray-800">Estimated Environmental Impact</h3><div class="grid grid-cols-2 gap-4 mt-2"><div class="bg-green-50 p-3 rounded-lg"><h4 class="font-medium text-green-800">Waste Diverted</h4><p class="text-2xl font-bold text-green-600">~85%</p><p class="text-xs text-green-700">From landfill</p></div><div class="bg-blue-50 p-3 rounded-lg"><h4 class="font-medium text-blue-800">CO₂ Saved</h4><p class="text-2xl font-bold text-blue-600">~200kg</p><p class="text-xs text-blue-700">Compared to conventional</p></div></div></div></div>
-        </div>
-    </div>
-
-    <!-- Floating buttons -->
-    <div class="fixed bottom-4 left-0 right-0 flex justify-center space-x-4 z-10">
-        <a href="transport.html" class="bg-secondary-600 hover:bg-secondary-700 text-white px-6 py-3 rounded-lg shadow-lg transition-all flex items-center"><i data-feather="bus"></i><span class="ml-2">Transport</span></a>
-        <a href="caption-ai.html" class="bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-lg shadow-lg transition-all flex items-center"><i data-feather="message-square"></i><span class="ml-2">Caption AI</span></a>
-        <a href="voice-generator.html" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg shadow-lg transition-all flex items-center"><i data-feather="mic"></i><span class="ml-2">Voice Plan</span></a>
-        <a href="waste-analysis.html" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg shadow-lg transition-all flex items-center"><i data-feather="activity"></i><span class="ml-2">Waste AI</span></a>
-    </div>
-</div>
-
-<!-- ===== SCRIPTS ===== -->
-<script>feather.replace();</script>
 <script>
-VANTA.WAVES({el: "#vanta-bg", color: 0x4db6ac, waveHeight: 20, shininess: 50, waveSpeed: 0.5, zoom: 0.8});
-/* === Quick-select buttons === */
-document.addEventListener('click', e => {
-  const btn = e.target.closest('.qs-btn');
-  if (!btn) return;
-  const val = btn.textContent.replace('+', '');
-  document.getElementById('att').value = val;
-});
-/* === AI Crowd Counter (TensorFlow) === */
-let model;
-async function loadModel() {
-  try {
-    model = await cocoSsd.load();
-    document.getElementById('crowdFile').addEventListener('change', async e => {
-      const file = e.target.files[0]; if (!file) return;
-      const preview = document.getElementById('aiCounterPreview');
-      const status  = document.getElementById('aiCounterStatus');
-      const reader  = new FileReader();
-      reader.onload = async ev => {
-        const img = new Image(); img.src = ev.target.result;
-        preview.innerHTML = `<img src="${ev.target.result}" class="w-full h-auto rounded-lg">`;
-        status.innerHTML = '<i data-feather="loader" class="animate-spin inline mr-2"></i> Analysing...'; feather.replace();
-        try {
-          const preds = await model.detect(img);
-          const people = preds.filter(p => p.class === 'person').length;
-          document.getElementById('att').value = people;
-          status.innerHTML = `<i data-feather="check-circle" class="inline mr-2"></i> Detected ${people} people`;
-        } catch (err) {
-          status.innerHTML = '<i data-feather="alert-circle" class="inline mr-2"></i> Detection failed';
-        }
-        feather.replace();
-      };
-      reader.readAsDataURL(file);
-    });
-  } catch (err) {
-    console.error(err);
-    document.getElementById('aiCounterStatus').innerHTML = '<i data-feather="alert-triangle" class="inline mr-2"></i> Model failed';
-    feather.replace();
-  }
+/* ========== 1. DATA ========== */
+const spots = [
+/* ===== Perundurai – Erode belt ===== */
+{n:"Dalmia RMC Perundurai",lat:11.2750,lng:77.5833,c:"construction",note:"24 h RMC plant",web:"https://www.dalmiabharat.com",civil:"Live batching plant – learn QC, admixture dosing.",hire:"4 interns",pay:"₹8 k"},
+{n:"SIPCOT Perundurai Lab",lat:11.2750,lng:77.5833,c:"consult",note:"Govt accredited soil lab",civil:"Triaxial, CBR, consolidation tests.",hire:"6 / yr",pay:"₹5 k"},
+{n:"UltraTech RMC Erode",lat:11.3410,lng:77.7172,c:"construction",note:"Ready-mix",web:"https://www.ultratechcement.com",civil:"Large RMC dispatch – observe slump retention.",hire:"4 interns",pay:"₹9 k"},
+{n:"Chettinad Cement Gobichettipalayam",lat:11.4550,lng:77.3830,c:"construction",note:"PPC dispatch",web:"https://www.chettinadcement.com",civil:"Bulk cement logistics – wagon loading.",hire:"3 interns",pay:"₹8 k"},
+{n:"Puzzolana M-Sand Unit Erode",lat:11.3200,lng:77.6000,c:"construction",note:"M-sand",web:"https://puzzolana.net",civil:"VSI crusher, classifier – Zone-II sand.",hire:"3 interns",pay:"₹7 k"},
+{n:"Sona NDT Erode",lat:11.3300,lng:77.7000,c:"consult",note:"NDT on steel",civil:"UT, RT on stacks & bridges.",hire:"2 students",pay:"₹6 k"},
+{n:"Leica Survey Store Erode",lat:11.3500,lng:77.6500,c:"equipment",note:"Total-station rental",web:"https://leica-geosystems.com",civil:"Training on TS, GNSS, data download.",hire:"Diploma interns",pay:"₹8 k"},
+{n:"Kongu Engg College Consultancy",lat:11.2750,lng:77.5833,c:"consult",note:"Student tests ₹300",civil:"Low-cost concrete / soil tests.",hire:"Always open",pay:"Certificate"},
+{n:"BuildCorp Erode",lat:11.3100,lng:77.5900,c:"construction",note:"Commercial builder",civil:"Bar-bending, BOQ prep.",hire:"3 interns",pay:"₹10 k"},
+{n:"L&T NHAI Bhavani Camp",lat:11.4830,lng:77.6830,c:"construction",note:"NH-544 widening",web:"https://www.larsentoubro.com",civil:"Soil stabilisation, WMM, paver.",hire:"Project interns",pay:"₹15 k"},
+{n:"ACC Plant Erode",lat:11.3410,lng:77.7172,c:"construction",note:"Bulk cement",web:"https://www.acc.co.in",civil:"Raw-mill, kiln, dispatch labs.",hire:"6-8 interns/yr",pay:"₹12-15 k"},
+
+/* ===== KERALA ===== */
+{n:"Malabar Cements Walayar",lat:10.8500,lng:76.8500,c:"construction",note:"PPC grinding",web:"https://www.malabarcements.com",civil:"State-owned plant – ball-mill, packer.",hire:"4 interns",pay:"₹9 k"},
+{n:"UltraTech RMC Palakkad",lat:10.7833,lng:76.6500,c:"construction",note:"Ready-mix",web:"https://www.ultratechcement.com",civil:"Highway plant – logistics study.",hire:"3 interns",pay:"₹9 k"},
+{n:"Kerala Clinker Kochi",lat:9.9500,lng:76.2600,c:"construction",note:"Clinker hub",civil:"Ship unloading – pneumatic conveying.",hire:"3 interns",pay:"₹10 k"},
+{n:"Vikram Suraksha Trivandrum",lat:8.5000,lng:76.9500,c:"equipment",note:"Safety demo centre",civil:"PPE, fall-arrest, fire-stop systems.",hire:"Sales interns",pay:"₹8 k"},
+{n:"Hilti Store Kochi",lat:9.9500,lng:76.2600,c:"equipment",note:"Demo centre",web:"https://www.hilti.co.in",civil:"Anchor fasteners, diamond coring.",hire:"Sales interns",pay:"₹10 k"},
+{n:"L&T Metro Camp Kochi",lat:9.9500,lng:76.2600,c:"construction",note:"KMRL phase-2",web:"https://www.larsentoubro.com",civil:"Metro viaduct – segment joints.",hire:"Project interns",pay:"₹16 k"},
+{n:"Sobha Concrete Palakkad",lat:10.8500,lng:76.6500,c:"construction",note:"Precast plant",web:"https://www.sobha.com",civil:"Hollow-core slabs, wall panels.",hire:"4 interns",pay:"₹10 k"},
+{n:"Kerala SIDCO Lab Thrissur",lat:10.5333,lng:76.2000,c:"consult",note:"Govt soil lab",civil:"Triaxial, CBR, sieve analysis.",hire:"5 / yr",pay:"₹5 k"},
+{n:"Accredited NDT Calicut",lat:11.2500,lng:75.7700,c:"consult",note:"NDT ₹800",civil:"UT, RT, DP on steel bridges.",hire:"2 students",pay:"₹6 k"},
+{n:"Chettinad RMC Calicut",lat:11.2500,lng:75.7700,c:"construction",note:"Ready-mix",web:"https://www.chettinadcement.com",civil:"Small-city RMC – logistics.",hire:"2 interns",pay:"₹8 k"},
+{n:"Puzhalon Crusher Kannur",lat:11.8745,lng:75.3704,c:"construction",note:"M-sand",civil:"VSI – Zone-II sand.",hire:"3 interns",pay:"₹7 k"},
+{n:"Steel Fab Yard Aluva",lat:10.1100,lng:76.3500,c:"equipment",note:"Steel bending",civil:"Plate bending, PWHT, NDT.",hire:"4 interns",pay:"₹12 k"},
+{n:"Kerala Road Research Centre Kollam",lat:8.8800,lng:76.6000,c:"consult",note:"Highway research",civil:"Bitumen testing, mix-design.",hire:"6 / yr",pay:"₹6 k"},
+{n:"Bharat Petroleum Cochin Refinery",lat:10.0500,lng:76.3200,c:"construction",note:"Tank farm",web:"https://www.bharatpetroleum.com",civil:"Heavy foundations, corrosion lab.",hire:"5 interns",pay:"₹14 k"},
+{n:"Cochin Shipyard",lat:9.9600,lng:76.2700,c:"equipment",note:"Ship building",web:"https://www.cochinshipyard.com",civil:"Dry dock, heavy lifts, weld tests.",hire:"6 interns",pay:"₹15 k"},
+{n:"Kerala Minerals & Metals Kollam",lat:8.8800,lng:76.6000,c:"construction",note:"Titanium plant",web:"https://www.kmml.com",civil:"Corrosion lab, slurry pipelines.",hire:"4 interns",pay:"₹12 k"},
+{n:"Travancore Cements Kottayam",lat:9.6000,lng:76.5500,c:"construction",note:"White cement",web:"https://www.travancorecements.com",civil:"White cement kiln – colour control.",hire:"3 interns",pay:"₹9 k"},
+{n:"UltraTech RMC Alleppey",lat:9.5000,lng:76.3300,c:"construction",note:"RMC plant",web:"https://www.ultratechcement.com",civil:"Canal-side plant – pump logistics.",hire:"2 interns",pay:"₹8 k"},
+{n:"MRF Tyres Test Track Kottayam",lat:9.6000,lng:76.5500,c:"consult",note:"Test track",web:"https://www.mrf.com",civil:"Concrete track – friction testing.",hire:"3 interns",pay:"₹10 k"},
+{n:"Kerala Irrigation Research Station",lat:10.5500,lng:76.2000,c:"consult",note:"Irrigation lab",civil:"Canal design, scour studies.",hire:"4 / yr",pay:"₹5 k"},
+{n:"NIELIT Calicut",lat:11.2500,lng:75.7700,c:"tech",note:"CAD courses",web:"https://www.nielit.gov.in",civil:"AutoCAD, Civil 3D certificates.",hire:"Always open",pay:"Certificate"},
+{n:"Kerala Highway Research Station",lat:8.9000,lng:76.6000,c:"consult",note:"Highway lab",civil:"Bitumen extraction, mix-design.",hire:"5 / yr",pay:"₹5 k"},
+{n:"Steel Plant Unit Kerala",lat:8.9000,lng:76.6000,c:"construction",note:"TMT plant",civil:"TMT process – quenching, temper.",hire:"4 interns",pay:"₹11 k"},
+{n:"Kochi Metro Rail Academy",lat:9.9500,lng:76.2600,c:"consult",note:"Metro training",web:"https://www.kochimetro.org",civil:"Metro construction practices.",hire:"6 / yr",pay:"₹8 k"},
+{n:"Kerala PWD Material Lab",lat:9.9500,lng:76.2600,c:"consult",note:"PWD lab",civil:"Soil, concrete, bitumen tests.",hire:"Always open",pay:"Certificate"},
+
+/* ===== existing rest of India ===== */
+{n:"ACC Plant Erode",lat:11.3410,lng:77.7172,c:"construction",note:"Bulk cement dispatch",web:"https://www.acc.co.in",civil:"India’s oldest cement maker.  Observe raw-mill, kiln, dispatch labs.  Summer interns work on mix-design optimisation.",hire:"Yes – 6-8 interns/yr",pay:"₹12-15 k/month"},
+{n:"UltraTech RMC Perundurai",lat:11.2750,lng:77.5833,c:"construction",note:"24 h batching",web:"https://www.ultratechcement.com",civil:"Largest RMC producer.  Great for learning concrete QA/QC, admixture dosing.",hire:"Yes – 10 interns/yr",pay:"₹10-12 k"},
+{n:"Dalmia Crusher Chennimalai",lat:11.1650,lng:77.6300,c:"construction",note:"20 mm blue metal",web:"https://www.dalmiabharat.com",civil:"Basalt stone crushing – sieve analysis, flakiness, impact value tests.",hire:"4-5 interns",pay:"₹8 k"},
+{n:"L&T NHAI Camp Bhavani",lat:11.4830,lng:77.6830,c:"construction",note:"NH-544 widening",web:"https://www.larsentoubro.com",civil:"Live highway project – observe soil stabilisation, WMM, paver track.",hire:"Yes – project interns",pay:"₹15 k"},
+{n:"Sona NDT Suriyampalayam",lat:11.3300,lng:77.7000,c:"consult",note:"Weld testing ₹750",civil:"Third-party NDT – UT, RT, DP on steel bridges & stacks.  Good for certification.",hire:"2-3 students",pay:"₹6 k"},
+{n:"Leica Dealer Nasiyanur",lat:11.3500,lng:77.6500,c:"equipment",note:"TS rental ₹1 k/day",web:"https://leica-geosystems.com",civil:"Train on total-station, GNSS, data-download, setting-out.",hire:"Diploma interns",pay:"₹8 k"},
+{n:"Puzzolana Crusher CBE Rd",lat:11.3200,lng:77.6000,c:"construction",note:"M-sand unit",web:"https://puzzolana.net",civil:"Manufactured-sand plant – VSI crusher, classifier, Zone-II sand.",hire:"Yes",pay:"₹7 k"},
+{n:"Birla Depot Pallipalayam",lat:11.3500,lng:77.7830,c:"construction",note:"PPC 53 grade",web:"https://www.birlacorporation.com",civil:"Large godown – learn inventory rotation, cube casting, customer demos.",hire:"Sales interns",pay:"₹9 k"},
+{n:"Ramco Kiln Karur",lat:10.9600,lng:78.0800,c:"construction",note:"Steam-cured bricks",web:"https://www.ramcocements.in",civil:"Autoclaved-aerated-concrete blocks – density, thermal conductivity.",hire:"Project interns",pay:"₹8 k"},
+{n:"SIPCOT Civil Lab",lat:11.2750,lng:77.5833,c:"consult",note:"Soil triaxial ₹600",civil:"Government-accredited lab – CBR, triaxial, consolidation.",hire:"6-8 / yr",pay:"₹5 k"},
+{n:"BuildCorp Pvt Erode Rd",lat:11.3100,lng:77.5900,c:"construction",note:"Turnkey commercial",civil:"Mid-size builder – bar-bending schedules, BOQ preparation.",hire:"3 interns",pay:"₹10 k"},
+{n:"Kongu Engg College Lab",lat:11.2750,lng:77.5833,c:"consult",note:"Student tests ₹300",civil:"College consultancy – low-cost tests for project work.",hire:"Always open",pay:"Certificate only"},
+{n:"UltraTech Plant Kovilpatti",lat:11.2300,lng:77.4830,c:"construction",note:"Bulk cement",web:"https://www.ultratechcement.com",civil:"Integrated plant – limestone crusher, vertical roller mill.",hire:"8-10 interns",pay:"₹12 k"},
+{n:"L&T Metro Camp Avinashi",lat:11.1930,lng:77.2700,c:"construction",note:"CMRL phase-2",web:"https://www.larsentoubro.com",civil:"Metro viaduct – launching gantry, segment joints.",hire:"Project interns",pay:"₹16 k"},
+{n:"ACC RMC Gobichettipalayam",lat:11.4550,lng:77.3830,c:"construction",note:"Ready-mix",web:"https://www.acc.co.in",civil:"Small-town RMC – good exposure to logistics & QC.",hire:"2 interns",pay:"₹8 k"},
+{n:"NLC Crusher Neyveli",lat:11.5333,lng:79.5000,c:"construction",note:"Lignite over-burden",web:"https://www.nlcindia.com",civil:"Mine over-burden rock used for GSB – learn mine planning.",hire:"6 interns",pay:"₹12 k"},
+{n:"BHEL Fab Yard Trichy",lat:10.7905,lng:78.7047,c:"equipment",note:"Heavy steel work",web:"https://www.bhel.com",civil:"Heavy plate bending, PWHT, NDT – perfect for steel electives.",hire:"4-6 interns",pay:"₹14 k"},
+{n:"Hilti Store Coimbatore",lat:11.0168,lng:76.9558,c:"equipment",note:"Demo centre",web:"https://www.hilti.co.in",civil:"Anchor fasteners, diamond coring, fire-stop systems – product presentations.",hire:"Sales interns",pay:"₹10 k"},
+{n:"Trimble Dealer Coimbatore",lat:11.0168,lng:76.9558,c:"equipment",note:"GNSS sets",web:"https://www.trimble.com",civil:"Latest surveying hardware/software – good for tech-savvy students.",hire:"Diploma interns",pay:"₹8 k"},
+{n:"Autodesk ATC Coimbatore",lat:11.0168,lng:76.9558,c:"tech",note:"Civil 3D courses",web:"https://www.autodesk.com",civil:"Authorised training centre – Revit, Civil 3D, Navisworks certificates.",hire:"Always open",pay:"Certificate"},
+{n:"Salem Steel Plant",lat:11.6500,lng:78.1600,c:"construction",note:"SS slabs",web:"https://steelauthority.com",civil:"Stainless-steel production – corrosion lab, weldability.",hire:"4 interns",pay:"₹12 k"},
+{n:"Dalmia Cement Kadapa",lat:14.4673,lng:78.8242,c:"construction",note:"Slag cement",web:"https://www.dalmiabharat.com",civil:"Ground-granulated blast-furnace slag cement – durability studies.",hire:"6 interns",pay:"₹11 k"},
+{n:"India Cements Sankar",lat:11.0000,lng:78.6500,c:"construction",note:"Packing plant",web:"https://www.indiacements.co.in",civil:"High-volume packing – logistics & supply-chain learning.",hire:"3 interns",pay:"₹9 k"},
+{n:"Chettinad Plant Karikkali",lat:11.0000,lng:79.6500,c:"construction",note:"Bulk dispatch",web:"https://www.chettinadcement.com",civil:"Large silos, wagon-loading systems – bulk-material handling.",hire:"4 interns",pay:"₹10 k"},
+{n:"Zuari Plant Yerraguntla",lat:14.6333,lng:78.5333,c:"construction",note:"Rail siding",web:"https://www.zuaricement.com",civil:"Railway siding – rail wagon loading, weigh-bridge.",hire:"2 interns",pay:"₹8 k"},
+{n:"Penna Plant Talaricheruvu",lat:15.0000,lng:78.2000,c:"construction",note:"PPC cement",web:"https://www.pennacement.com",civil:"Pozzolana Portland cement – fly-ash utilisation study.",hire:"3 interns",pay:"₹8 k"},
+{n:"KCP Plant Macherla",lat:16.4833,lng:79.4333,c:"construction",note:"Cement grinding",web:"https://www.kcpcement.in",civil:"Standalone grinding unit – ball-mill & roller-press.",hire:"2 interns",pay:"₹7 k"},
+{n:"Orient Cement Devapur",lat:18.9667,lng:78.3667,c:"construction",note:"Limestone mine",web:"https://www.orientcement.com",civil:"Open-cast limestone mine – drilling, blasting, environment.",hire:"5 interns",pay:"₹9 k"},
+{n:"Birla Corp Chanderia",lat:24.7111,lng:74.5833,c:"construction",note:"Cement works",web:"https://www.birlacorporation.com",civil:"Integrated plant – raw-mill, kiln, cooler, ESP.",hire:"6 interns",pay:"₹10 k"},
+{n:"JK Cement Nimbahera",lat:24.6000,lng:76.2833,c:"construction",note:"Grey/white cement",web:"https://www.jkcement.com",civil:"Dual-process grey & white cement – colour control, oil-well cement.",hire:"8 interns",pay:"₹12 k"},
+{n:"Shree Cement Beawar",lat:26.1000,lng:74.3167,c:"construction",note:"Cement grinding",web:"https://www.shreecement.in",civil:"World’s largest single-location cement plant – energy efficiency.",hire:"10 interns",pay:"₹13 k"},
+{n:"Ambuja Plant Bhatapara",lat:21.7333,lng:81.9333,c:"construction",note:"Clinker unit",web:"https://www.ambujacement.com",civil:"Single-kiln 3 MTPA – kiln drive, cooler efficiency.",hire:"6 interns",pay:"₹11 k"},
+{n:"UltraTech Plant Patni",lat:21.2500,lng:81.6167,c:"construction",note:"Cement terminal",web:"https://www.ultratechcement.com",civil:"River terminal – bulk barge unloading, pneumatic conveying.",hire:"3 interns",pay:"₹9 k"},
+{n:"ACC Plant Jamul",lat:21.4000,lng:81.5500,c:"construction",note:"New line commissioned",web:"https://www.acc.co.in",civil:"Green-field 3 MTPA line – latest PLC, SCADA.",hire:"8 interns",pay:"₹12 k"},
+{n:"Lafarge Plant Sonadih",lat:22.2500,lng:82.8667,c:"construction",note:"Cement hub",web:"https://www.lafargeholcim.com",civil:"Multi-kiln hub – alternate fuel (rice husk) usage.",hire:"5 interns",pay:"₹11 k"},
+{n:"Star Cement Meghalaya",lat:25.5700,lng:90.2000,c:"construction",note:"Grinding unit",web:"https://www.starcement.co.in",civil:"Limestone-rich North-east – low-clinker factor blends.",hire:"4 interns",pay:"₹9 k"},
+{n:"Dalmia Bharat Calcom",lat:26.3300,lng:92.8300,c:"construction",note:"Cement works",web:"https://www.dalmiabharat.com",civil:"Assam plant – seismic-zone construction practices.",hire:"3 interns",pay:"₹8 k"},
+{n:"JSW Plant Dolvi",lat:18.7000,lng:73.0200,c:"construction",note:"Slag cement",web:"https://www.jswcement.in",civil:"Port-based slag cement – granulated blast-furnace slag utilisation.",hire:"6 interns",pay:"₹11 k"},
+{n:"Ultratech Plant Awarpur",lat:20.2500,lng:79.5333,c:"construction",note:"Cement works",web:"https://www.ultratechcement.com",civil:"One of India’s largest kilns – 4.5 MTPA – heat-recovery study.",hire:"10 interns",pay:"₹13 k"},
+{n:"Ambuja Plant Maratha",lat:20.7500,lng:76.7000,c:"construction",note:"Cement plant",web:"https://www.ambujacement.com",civil:"Dry-process kiln – waste-heat-recovery power.",hire:"7 interns",pay:"₹11 k"},
+{n:"Manikgarh Cement Gadchandur",lat:19.7500,lng:79.1333,c:"construction",note:"Limestone mine",web:"https://www.manikgarhcement.com",civil:"Captive limestone mine – drilling pattern optimisation.",hire:"5 interns",pay:"₹9 k"},
+{n:"Kesoram Plant Vikram",lat:24.6000,lng:75.6333,c:"construction",note:"Cement unit",web:"https://www.kesoramcement.com",civil:"Single-kiln unit – six-stage pre-heater, calciner.",hire:"4 interns",pay:"₹8 k"},
+{n:"Birla Corp Raebareli",lat:26.2200,lng:81.2400,c:"construction",note:"Cement grinding",web:"https://www.birlacorporation.com",civil:"Grinding-only unit – roller press, ball-mill combo.",hire:"3 interns",pay:"₹8 k"},
+{n:"JK Cement Kanpur",lat:26.4600,lng:80.3200,c:"construction",note:"Cement terminal",web:"https://www.jkcement.com",civil:"Northern-region packing terminal – logistics study.",hire:"2 interns",pay:"₹7 k"},
+{n:"Ambuja Plant Dadri",lat:28.5500,lng:77.5500,c:"construction",note:"Packing plant",web:"https://www.ambujacement.com",civil:"NCR packing plant – 24-h truck dispatch, RFID weigh-bridge.",hire:"3 interns",pay:"₹9 k"},
+{n:"Shree Cement Bulandshahr",lat:28.4100,lng:77.8500,c:"construction",note:"Cement works",web:"https://www.shreecement.in",civil:"UP plant – pet-coke grinding, WHRS.",hire:"4 interns",pay:"₹10 k"},
+{n:"UltraTech Plant Kharia",lat:24.7500,lng:77.4167,c:"construction",note:"Cement hub",web:"https://www.ultratechcement.com",civil:"Central-India hub – multi-product dispatch centre.",hire:"5 interns",pay:"₹10 k"}
+];
+
+/* ========== 2. GLOBALS ========== */
+let map; const colorMap = {construction:'#0288d1',consult:'#388e3c',equipment:'#f57c00',tech:'#7b1fa2'};
+
+/* ========== 3. INIT MAP ========== */
+function initMap(){
+  map = new google.maps.Map(document.getElementById('map'),{zoom:5,center:{lat:20.5937,lng:78.9629}});
+  spots.forEach(addMarker);
+  fillSideCards();
 }
-loadModel();
-/* === Waste-photo analyser (mock) === */
-document.getElementById('wasteFile').addEventListener('change', e => {
-  const file = e.target.files[0]; if (!file) return;
-  const preview = document.getElementById('wastePreview');
-  const status  = document.getElementById('wasteStatus');
-  const analysis= document.getElementById('wasteAnalysis');
-  const reader  = new FileReader();
-  reader.onload = ev => {
-    preview.innerHTML = `<img src="${ev.target.result}" class="w-full h-auto rounded-lg">`;
-    status.innerHTML = '<i data-feather="loader" class="animate-spin inline mr-2"></i> Analysing...'; feather.replace();
-    setTimeout(() => {
-      const bio = Math.floor(Math.random() * 30) + 70; // 70-100 %
-      const score = Math.min(100, bio + 10);
-      analysis.classList.remove('hidden');
-      analysis.querySelector('.bg-green-500').style.width = bio + '%';
-      analysis.querySelector('span:first-child').textContent = bio + '% Biodegradable';
-      analysis.querySelector('span:last-child').textContent  = (100 - bio) + '% Plastic/Non-recyclable';
-      analysis.querySelector('.text-3xl').textContent = score + '/100';
-      analysis.querySelector('.text-sm').textContent =
-        score >= 90 ? 'Outstanding!' : score >= 75 ? 'Excellent sustainability effort!' : 'Good job, room for improvement';
-      status.innerHTML = '<i data-feather="check-circle" class="inline mr-2"></i> Analysis complete';
-      feather.replace();
-    }, 1500);
-  };
-  reader.readAsDataURL(file);
-});
-/* === Zero-waste maths & generate plan === */
-const PRICE = {plate: 3, cup: 2, napkin: 0.5, bin: 650};
-function calcWaste() {
-  const n = Math.max(1, parseInt(document.getElementById('att').value) || 0);
-  const hasOil = document.getElementById('oil').checked;
-  const hasLiq = document.getElementById('liq').checked;
-  const plates = Math.ceil(n * 1.1);
-  const cups   = hasLiq ? Math.ceil(n * 1.15) : 0;
-  const napkins= Math.ceil(n * 1.2);
-  const oilBags= hasOil ? Math.ceil(n / 50) : 0;
-  const compost= Math.ceil(n / 75);
-  const recycle= Math.ceil(n / 100);
-  const costPlates = (plates * PRICE.plate).toFixed(2);
-  const costCups   = (cups   * PRICE.cup ).toFixed(2);
-  const costNapkin = (napkins* PRICE.napkin).toFixed(2);
-  const costBins   = (compost* PRICE.bin).toFixed(2);
-  const total = (parseFloat(costPlates)+parseFloat(costCups)+parseFloat(costNapkin)+parseFloat(costBins)).toFixed(2);
-  return {n, plates, cups, napkins, oilBags, compost, recycle, costPlates, costCups, costNapkin, costBins, total, hasOil, hasLiq};
+
+/* ========== 4. ADD MARKER ========== */
+function addMarker(sp){
+  const marker = new google.maps.Marker({
+    position:{lat:sp.lat,lng:sp.lng},map,title:sp.n,
+    icon:{url:'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"><circle cx="8" cy="8" r="7" fill="${colorMap[sp.c]}"/></svg>`),scaledSize:new google.maps.Size(16,16),anchor:new google.maps.Point(8,8)}
+  });
+  marker.addListener('click',()=>{
+    if(sp.web){window.open(sp.web,'_blank')}else{window.open('https://www.google.com/search?q='+encodeURIComponent(sp.n+' '+sp.note),'_blank')}
+  });
 }
-document.getElementById('generateBtn').addEventListener('click', () => {
-  const w = calcWaste();
-  const ename = document.getElementById('ename').value || 'Unnamed Event';
-  const meal = document.getElementById('meal').value;
-  document.getElementById('resOverview').textContent = `${ename} for ${w.n} attendees (${meal})`;
-  document.getElementById('resSupplies').innerHTML = `
-    <li>Compostable plates: ${w.plates} (10 % buffer)</li>
-    ${w.cups?`<li>Compostable cups: ${w.cups} (15 % buffer)</li>`:''}
-    <li>Napkins: ${w.napkins} (20 % buffer)</li>
-    ${w.oilBags?`<li>Oil collection bags: ${w.oilBags}</li>`:''}
-    <li>Compost bins: ${w.compost} (1 per 75)</li>
-    <li>Recycling bins: ${w.recycle} (1 per 100)</li>`;
-  document.getElementById('resTotal').textContent = `Total: ₹${w.total}`;
-  document.getElementById('resBreak').innerHTML = `
-    <li class="flex justify-between"><span>Plates:</span><span>₹${w.costPlates}</span></li>
-    ${w.cups?`<li class="flex justify-between"><span>Cups:</span><span>₹${w.costCups}</span></li>`:''}
-    <li class="flex justify-between"><span>Napkins:</span><span>₹${w.costNapkin}</span></li>
-    <li class="flex justify-between"><span>Bins:</span><span>₹${w.costBins}</span></li>
-    <li class="flex justify-between font-medium border-t pt-1 mt-1"><span>Total:</span><span>₹${w.total}</span></li>`;
-  document.getElementById('results').classList.remove('hidden');
-  document.getElementById('results').scrollIntoView({behavior:'smooth'});
-});
-/* === Carbon footprint === */
-function calculateCarbonFootprint(attendees, mealType, hasOil) {
-  let emissions = 0;
-  switch(mealType) {
-    case 'Snacks Only': emissions = 0.2 * attendees; break;
-    case 'Breakfast': emissions = 0.5 * attendees; break;
-    case 'Lunch': emissions = 1.2 * attendees; break;
-    case 'Dinner': emissions = 1.5 * attendees; break;
-    case 'Full Day': emissions = 2.5 * attendees; break;
-  }
-  if (hasOil) emissions += 0.3 * attendees;
-  const savings = emissions * 0.7;
-  return {conventional: emissions.toFixed(1), saved: savings.toFixed(1), net: (emissions - savings).toFixed(1)};
+
+/* ========== 5. FILL SIDE CARDS ========== */
+function fillSideCards(){
+  const box = document.getElementById('sideContent');
+  // game
+  const gameCard = document.createElement('div');gameCard.className='card bubble';gameCard.style.background='var(--game)';gameCard.style.color='var(--gameText)';
+  gameCard.innerHTML=`<h4>🎮 Game Zone – Mixologist</h4><p><strong>Resource-optimisation puzzle:</strong> Mix concrete / asphalt / mortar to hit target strength & budget.</p><a class="btnLi" href="https://mixolab.blogspot.com/" target="_blank" rel="noopener">Play Mixologist Now</a>`;box.appendChild(gameCard);
+  // companies
+  spots.forEach(sp=>{
+    const card = document.createElement('div');card.className='card';
+    card.innerHTML=`<h4>${sp.n}</h4><p><strong>What happens:</strong> ${sp.note}</p><p><strong>For civil students:</strong> ${sp.civil||'Good for industrial visit; observe processes.'}</p>${sp.hire?`<p><span class="tag">Internship</span> ${sp.hire}</p>`:''}${sp.pay?`<p><span class="tag">Stipend</span> ${sp.pay}</p>`:''}`;box.appendChild(card);
+  });
+  // about
+  const footer=document.createElement('div');footer.className='card bubble';footer.id='creditCard';footer.style.background='var(--credit)';footer.style.color='#fff';
+  footer.innerHTML=`<h4>About & Advice for Civil Students</h4><ul style="margin:6px 0;padding-left:20px;font-size:12px;color:#fff"><li>Carry résumé + college ID when you visit.</li><li>Mail HR 2 weeks ahead; mention map reference.</li><li>Ask for “shop-floor + QC-lab” rotation.</li><li>Stipend range: ₹5-25 k/month (construction/equipment).</li><li>Maintain a site-diary – recruiters love quantified stories.</li></ul><p style="margin:8px 0 0;font-size:12px">Curated with ❤️ by</p><strong style="font-size:15px">Rahul Shyam</strong><br><a class="btnLi" href="https://www.linkedin.com/in/rahulshyamcivil/" target="_blank" rel="noopener">Linked-in Profile</a>`;box.appendChild(footer);
 }
-/* === Voice data restore === */
-const voiceData = localStorage.getItem('voiceGeneratedEvent');
-if (voiceData) {
-  const d = JSON.parse(voiceData);
-  document.getElementById('ename').value = d.eventName;
-  document.getElementById('att').value = d.attendees;
-  document.getElementById('meal').value = d.mealType;
-  document.getElementById('oil').checked = d.hasOil;
-  document.getElementById('liq').checked = d.hasLiquid;
-  localStorage.removeItem('voiceGeneratedEvent');
+
+/* ========== 6. TOGGLE SIDE ========== */
+function toggleSide(){
+  const side=document.getElementById('side'),btn=document.getElementById('toggleBtnBar');
+  side.classList.toggle('hide');btn.textContent=side.classList.contains('hide')?'⊞ Show details':'⊟ Hide details';
+}
+
+/* ========== 7. LOCATION & SEARCH ========== */
+function getUserLocation(){navigator.geolocation?.getCurrentPosition(p=>{map.setCenter({lat:p.coords.latitude,lng:p.coords.longitude});map.setZoom(10)});}
+function searchCity(){
+  const city=document.getElementById('cityInput').value.trim();if(!city)return;
+  new google.maps.Geocoder().geocode({address:city+' India'},(res,status)=>{if(status==='OK')map.setCenter(res[0].geometry.location);});
+}
+
+/* ========== 8. DARK MODE ========== */
+function toggleDark(){
+  document.body.classList.toggle('dark');
+  document.getElementById('darkToggle').textContent=document.body.classList.contains('dark')?'☀️':'🌙';
+  localStorage.setItem('dark',document.body.classList.contains('dark'));
+}
+(function(){
+  if(localStorage.getItem('dark')==='true'){document.body.classList.add('dark');document.getElementById('darkToggle').textContent='☀️';}
+})();
+
+/* ========== 9. GOOGLE TRANSLATE ========== */
+function googleTranslateElementInit(){
+  new google.translate.TranslateElement({pageLanguage:'en',includedLanguages:'en,hi,ta',layout:google.translate.TranslateElement.InlineLayout.SIMPLE},'google_translate_element');
 }
 </script>
 </body>
