@@ -1,423 +1,284 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zero-Waste Event Planner</title>
-<style>
-:root{--prime:#00c9a7;--sec:#ffd166;--danger:#ef476f;--dark:#1b1b2f;--light:#f8f9fa;--glass:rgba(255,255,255,.25);--shadow:0 8px 32px rgba(0,0,0,.15)}
-*{box-sizing:border-box;margin:0;padding:0;font-family:"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
-body{background:linear-gradient(135deg,#00c9a7 0%,#92fe9d 100%);min-height:100vh;padding:20px}
-.container{max-width:700px;margin:0 auto}
-.card{background:var(--glass);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.3);border-radius:18px;padding:25px;margin:15px 0;box-shadow:var(--shadow);animation:fadeUp .6s}
-@keyframes fadeUp{from{opacity:0;transform:translateY(30px)}}
-h1,h2{color:var(--dark);margin:0 0 15px 0}
-h1{font-size:2rem;text-align:center}
-h2{font-size:1.5rem}
-label{display:block;margin:15px 0 5px;font-weight:600;color:var(--dark)}
-input[type="text"],input[type="number"],select{width:100%;padding:12px;border-radius:8px;border:1px solid rgba(0,0,0,.1);font-size:1rem;background:white}
-input[type="checkbox"]{margin-right:8px}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin:15px 0}
-button{width:100%;padding:15px;border:none;border-radius:10px;background:var(--prime);color:#fff;font-size:1.1rem;font-weight:700;cursor:pointer;transition:all .25s;margin-top:10px}
-button:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,201,167,.4)}
-button:active{transform:translateY(0);box-shadow:0 2px 8px rgba(0,201,167,.4)}
-button:disabled{opacity:0.6;cursor:not-allowed;transform:none}
-#pickBtn{background:var(--sec);color:var(--dark);position:relative;overflow:hidden}
-#fileInput{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:10}
-.status-msg{text-align:center;font-weight:600;margin-top:15px;padding:10px;border-radius:8px;min-height:24px;white-space:pre-line;line-height:1.6}
-.success{background:rgba(0,201,167,.2);color:#00695c}
-.error{background:rgba(239,71,111,.2);color:#c62828}
-.info{background:rgba(255,209,102,.2);color:#f57c00}
-#imagePreview{max-width:100%;max-height:300px;margin:10px 0;border-radius:8px;display:none}
-.quick-select{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:15px 0}
-.quick-btn{padding:12px;background:white;border:2px solid var(--prime);color:var(--dark);border-radius:8px;cursor:pointer;font-weight:600;transition:.2s;border:none}
-.quick-btn:hover{background:var(--prime);color:white;transform:scale(1.05)}
-.experimental-badge{display:inline-block;background:#ff9800;color:white;padding:4px 8px;border-radius:5px;font-size:0.75rem;font-weight:700;margin-left:8px}
-.side-panel{position:fixed;right:-450px;top:0;width:450px;height:100vh;background:var(--glass);backdrop-filter:blur(12px);border-left:1px solid rgba(255,255,255,.3);box-shadow:var(--shadow);transition:right .3s;z-index:999;padding:20px;overflow-y:auto}
-.side-panel.open{right:0}
-.side-panel-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}
-.close-btn{background:var(--danger);color:white;border:none;padding:8px 15px;border-radius:8px;cursor:pointer;font-weight:600}
-.tab-container{display:flex;gap:10px;margin-bottom:15px}
-.tab-btn{flex:1;padding:10px;background:white;border:2px solid var(--prime);color:var(--dark);border-radius:8px;cursor:pointer;font-weight:600;transition:.2s}
-.tab-btn.active{background:var(--prime);color:white}
-.tab-content{display:none}
-.tab-content.active{display:block}
-.caption-output{background:white;padding:15px;border-radius:8px;margin:10px 0;min-height:150px;white-space:pre-wrap;border:1px solid rgba(0,0,0,.1);font-size:0.95rem}
-.copy-btn{background:var(--sec);color:var(--dark);padding:12px;border:none;border-radius:8px;cursor:pointer;font-weight:600;width:100%;margin-top:10px}
-.copy-btn:hover{background:#ffc233}
-.collapse-trigger{position:fixed;right:0;top:50%;transform:translateY(-50%);background:var(--prime);color:white;padding:15px 10px;border-radius:10px 0 0 10px;cursor:pointer;font-weight:700;writing-mode:vertical-rl;text-orientation:mixed;box-shadow:var(--shadow);transition:.3s;z-index:1000}
-.collapse-trigger:hover{padding-right:15px}
-.bus-panel{position:fixed;left:-450px;top:0;width:450px;height:100vh;background:var(--glass);backdrop-filter:blur(12px);border-right:1px solid rgba(255,255,255,.3);box-shadow:var(--shadow);transition:left .3s;z-index:998;padding:20px;overflow-y:auto}
-.bus-panel.open{left:0}
-.bus-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}
-.bus-close{background:var(--danger);color:white;border:none;padding:8px 15px;border-radius:8px;cursor:pointer;font-weight:600}
-.bus-route{margin-bottom:20px;background:rgba(255,255,255,.3);padding:15px;border-radius:10px}
-.bus-route h3{margin-bottom:10px;color:var(--dark)}
-.bus-table{width:100%;border-collapse:collapse;font-size:0.85rem;background:white;border-radius:8px}
-.bus-table th,.bus-table td{padding:8px;border:1px solid rgba(0,0,0,.1);text-align:left}
-.bus-table th{background:rgba(0,201,167,.3);font-weight:600}
-.bus-left-trigger{position:fixed;left:0;top:50%;transform:translateY(-50%);background:var(--sec);color:var(--dark);padding:15px 10px;border-radius:0 10px 10px 0;cursor:pointer;font-weight:700;writing-mode:vertical-rl;text-orientation:mixed;box-shadow:var(--shadow);transition:.3s;z-index:997}
-.bus-left-trigger:hover{padding-left:15px}
-@media(max-width:768px){.side-panel,.bus-panel{width:100%}.side-panel{right:-100%}.bus-panel{left:-100%}}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Greenify Event Maestro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.18.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.waves.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            100: '#e0f2f1', 200: '#b2dfdb', 300: '#80cbc4', 400: '#4db6ac',
+                            500: '#26a69a', 600: '#009688', 700: '#00897b', 800: '#00796b', 900: '#00695c',
+                        },
+                        secondary: {
+                            100: '#f1f8e9', 200: '#dcedc8', 300: '#c5e1a5', 400: '#aed581',
+                            500: '#9ccc65', 600: '#8bc34a', 700: '#7cb342', 800: '#689f38', 900: '#558b2f',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Poppins', sans-serif; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        .animate-float { animation: float 6s ease-in-out infinite; }
+        @keyframes float { 0%,100% { transform: translateY(0px); } 50% { transform: translateY(-15px); } }
+    </style>
 </head>
-<body>
+<body class="bg-gradient-to-br from-primary-200 to-primary-400 min-h-screen" id="vanta-bg">
+<div class="container mx-auto px-4 py-8">
+    <header class="text-center mb-8">
+        <div class="inline-block p-4 rounded-full bg-white/20 backdrop-blur-md mb-4 animate-float"><i data-feather="leaf" class="w-12 h-12 text-primary-700"></i></div>
+        <h1 class="text-4xl font-bold text-gray-800 mb-2">Greenify Event Maestro</h1>
+        <p class="text-lg text-gray-700">Plan sustainable events with eco-conscious precision</p>
+    </header>
 
-<div class="container">
-  <div class="card">
-    <h1>Zero-Waste Event Planner</h1>
-    <label for="ename">Event name</label>
-    <input type="text" id="ename" placeholder="e.g. TechFest 2025">
-    <div class="grid">
-      <div>
-        <label for="att">Expected attendees</label>
-        <input type="number" id="att" min="1" value="200">
-      </div>
-      <div>
-        <label for="meal">Meal type</label>
-        <select id="meal">
-          <option value="snacks">Snacks only</option>
-          <option value="breakfast">Breakfast</option>
-          <option value="lunch">Lunch</option>
-          <option value="dinner">Dinner</option>
-        </select>
-      </div>
+    <!-- Event Details -->
+    <div class="glass-card rounded-2xl shadow-xl p-6 mb-8 max-w-3xl mx-auto">
+        <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center"><i data-feather="calendar" class="mr-2"></i> Event Details</h2>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-gray-700 mb-2 font-medium">Event Name</label>
+                <input id="ename" type="text" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent" placeholder="e.g. Eco Conference 2023">
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-gray-700 mb-2 font-medium">Expected Attendees</label>
+                    <input id="att" type="number" min="1" value="100" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                </div>
+                <div>
+                    <label class="block text-gray-700 mb-2 font-medium">Meal Type</label>
+                    <select id="meal" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                        <option>Snacks Only</option><option>Breakfast</option><option selected>Lunch</option><option>Dinner</option><option>Full Day</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                <label class="block text-gray-700 mb-2 font-medium">Quick Select</label>
+                <div class="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                    <button class="qs-btn bg-primary-500 hover:bg-primary-600 text-white py-2 px-3 rounded-lg transition-all">50</button>
+                    <button class="qs-btn bg-primary-500 hover:bg-primary-600 text-white py-2 px-3 rounded-lg transition-all">100</button>
+                    <button class="qs-btn bg-primary-500 hover:bg-primary-600 text-white py-2 px-3 rounded-lg transition-all">200</button>
+                    <button class="qs-btn bg-primary-500 hover:bg-primary-600 text-white py-2 px-3 rounded-lg transition-all">500</button>
+                    <button class="qs-btn bg-primary-500 hover:bg-primary-600 text-white py-2 px-3 rounded-lg transition-all">1000</button>
+                    <button class="qs-btn bg-primary-500 hover:bg-primary-600 text-white py-2 px-3 rounded-lg transition-all">2000+</button>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <label class="inline-flex items-center"><input id="oil" type="checkbox" class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50"><span class="ml-2 text-gray-700">Has fried food / oil</span></label>
+                <label class="inline-flex items-center"><input id="liq" type="checkbox" class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50"><span class="ml-2 text-gray-700">Has liquid refreshment</span></label>
+            </div>
+        </div>
     </div>
-    <label>Quick Select Common Sizes:</label>
-    <div class="quick-select">
-      <button class="quick-btn" type="button" onclick="setAttendees(50)">50</button>
-      <button class="quick-btn" type="button" onclick="setAttendees(100)">100</button>
-      <button class="quick-btn" type="button" onclick="setAttendees(200)">200</button>
-      <button class="quick-btn" type="button" onclick="setAttendees(500)">500</button>
-      <button class="quick-btn" type="button" onclick="setAttendees(1000)">1000</button>
-      <button class="quick-btn" type="button" onclick="setAttendees(2000)">2000+</button>
-    </div>
-    <label><input type="checkbox" id="oil"> Has fried food / oil</label>
-    <label><input type="checkbox" id="liq"> Has liquid refreshment</label>
-  </div>
 
-  <div class="card">
-    <h2>AI Photo Counter <span class="experimental-badge">EXPERIMENTAL</span></h2>
-    <p style="color:var(--dark);margin-bottom:15px;font-size:0.9rem">Upload crowd photo for AI counting</p>
-    <div style="position:relative">
-      <button id="pickBtn" type="button">
-        Choose Photo
-        <input type="file" id="fileInput" accept="image/*">
-      </button>
+    <!-- AI Crowd Counter -->
+    <div class="glass-card rounded-2xl shadow-xl p-6 mb-8 max-w-3xl mx-auto">
+        <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center"><i data-feather="camera" class="mr-2"></i> AI Crowd Counter</h2>
+        <div class="text-center">
+            <div class="relative inline-block mb-4">
+                <button class="bg-secondary-500 hover:bg-secondary-600 text-white font-medium py-3 px-6 rounded-lg transition-all flex items-center"><i data-feather="upload" class="mr-2"></i> Upload Crowd Photo</button>
+                <input id="crowdFile" type="file" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+            </div>
+            <div id="aiCounterPreview" class="border-2 border-dashed border-gray-300 rounded-xl p-4 mb-4"><i data-feather="image" class="w-16 h-16 text-gray-400 mx-auto"></i><p class="text-gray-500 mt-2">Preview will appear here</p></div>
+            <div id="aiCounterStatus" class="bg-primary-100 text-primary-800 py-2 px-4 rounded-lg inline-block"><i data-feather="loader" class="animate-spin inline mr-2"></i><span>Ready to analyze</span></div>
+        </div>
     </div>
-    <img id="imagePreview" alt="Preview">
-    <div id="aiStatus" class="status-msg"></div>
-  </div>
 
-  <button id="genBtn" type="button">Generate Zero-Waste Plan</button>
-  <div id="planStatus" class="status-msg"></div>
+    <!-- Generate Button -->
+    <div class="text-center mb-8">
+        <button id="generateBtn" class="bg-gradient-to-r from-primary-600 to-secondary-600 hover:from-primary-700 hover:to-secondary-700 text-white font-bold py-4 px-8 rounded-full shadow-lg transform hover:scale-105 transition-all duration-300 flex items-center mx-auto"><i data-feather="zap" class="mr-2"></i> Generate Zero-Waste Plan</button>
+    </div>
+
+    <!-- Waste Verification -->
+    <div id="wasteVerification" class="glass-card rounded-2xl shadow-xl p-6 mb-8 max-w-3xl mx-auto">
+        <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center"><i data-feather="check-circle" class="mr-2"></i> Waste Verification</h2>
+        <div class="text-center">
+            <div class="relative inline-block mb-4">
+                <button class="bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-6 rounded-lg transition-all flex items-center"><i data-feather="upload" class="mr-2"></i> Upload Waste Photo</button>
+                <input id="wasteFile" type="file" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+            </div>
+            <div id="wastePreview" class="border-2 border-dashed border-gray-300 rounded-xl p-4 mb-4"><i data-feather="image" class="w-16 h-16 text-gray-400 mx-auto"></i><p class="text-gray-500 mt-2">Upload photo of waste collected</p></div>
+            <div id="wasteStatus" class="bg-primary-100 text-primary-800 py-2 px-4 rounded-lg inline-block"><i data-feather="loader" class="animate-spin inline mr-2"></i><span>Ready to analyze</span></div>
+            <div id="wasteAnalysis" class="hidden">
+                <div class="bg-white/70 rounded-xl p-6 mb-4"><h3 class="font-medium text-gray-800 mb-2">Waste Composition Analysis</h3><div class="h-4 bg-gray-200 rounded-full mb-2"><div class="h-full bg-green-500 rounded-full" style="width: 75%"></div></div><div class="flex justify-between text-sm text-gray-600"><span>75% Biodegradable</span><span>25% Plastic/Non-recyclable</span></div></div>
+                <div class="bg-primary-100 rounded-xl p-4"><h3 class="font-medium text-primary-800 mb-1">Your Green Score</h3><div class="text-3xl font-bold text-primary-600">85/100</div><p class="text-sm text-primary-700 mt-1">Excellent sustainability effort!</p></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results -->
+    <div id="results" class="glass-card rounded-2xl shadow-xl p-6 mb-8 max-w-3xl mx-auto hidden">
+        <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center"><i data-feather="check-circle" class="mr-2 text-green-500"></i> Your Zero-Waste Plan</h2>
+        <div class="bg-white/70 rounded-xl p-6 space-y-6">
+            <div class="flex items-start"><div class="bg-primary-100 p-2 rounded-full mr-3"><i data-feather="clipboard" class="text-primary-600"></i></div><div><h3 class="font-medium text-gray-800">Event Overview</h3><p id="resOverview" class="text-gray-600">Loading event details...</p></div></div>
+            <div class="flex items-start"><div class="bg-secondary-100 p-2 rounded-full mr-3"><i data-feather="shopping-bag" class="text-secondary-600"></i></div><div><h3 class="font-medium text-gray-800">Required Supplies</h3><ul id="resSupplies" class="list-disc list-inside text-gray-600 space-y-1"></ul></div></div>
+            <div class="flex items-start"><div class="bg-primary-100 p-2 rounded-full mr-3"><i data-feather="dollar-sign" class="text-primary-600"></i></div><div><h3 class="font-medium text-gray-800">Estimated Costs</h3><p id="resTotal" class="text-gray-600">Total: ₹0</p><div class="mt-2 bg-blue-50 p-3 rounded-lg"><h4 class="font-medium text-blue-800 mb-1">Cost Breakdown</h4><ul id="resBreak" class="text-sm space-y-1"></ul></div></div></div>
+            <div class="flex items-start"><div class="bg-secondary-100 p-2 rounded-full mr-3"><i data-feather="lightbulb" class="text-secondary-600"></i></div><div><h3 class="font-medium text-gray-800">AI-Generated Eco Recommendations</h3><div class="mb-4"><h4 class="text-sm font-medium text-gray-700 mb-1">Nearby Waste Vendors</h4><div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2"><div class="bg-white p-2 rounded-lg border border-gray-200"><div class="flex justify-between"><span class="font-medium">Green Compost Co.</span><span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">4.8 ★</span></div><p class="text-xs text-gray-600">1.2km away • ₹500 pickup</p></div><div class="bg-white p-2 rounded-lg border border-gray-200"><div class="flex justify-between"><span class="font-medium">Eco Recycle Hub</span><span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">4.5 ★</span></div><p class="text-xs text-gray-600">2.5km away • ₹300 pickup</p></div></div></div><div><h4 class="text-sm font-medium text-gray-700 mb-1">Smart Suggestions</h4><ul class="list-disc list-inside text-gray-600 space-y-1"><li>Use banana leaves for authentic eco-friendly serving</li><li>Set up clearly labeled waste stations (compost, recycling, landfill)</li><li>Partner with local composting facility for waste processing</li><li>Encourage attendees to bring reusable water bottles</li><li>Use digital tickets to reduce paper waste</li><li>Provide bike parking to encourage sustainable transport</li></ul></div></div></div>
+            <div class="flex items-start"><div class="bg-primary-100 p-2 rounded-full mr-3"><i data-feather="bar-chart-2" class="text-primary-600"></i></div><div><h3 class="font-medium text-gray-800">Estimated Environmental Impact</h3><div class="grid grid-cols-2 gap-4 mt-2"><div class="bg-green-50 p-3 rounded-lg"><h4 class="font-medium text-green-800">Waste Diverted</h4><p class="text-2xl font-bold text-green-600">~85%</p><p class="text-xs text-green-700">From landfill</p></div><div class="bg-blue-50 p-3 rounded-lg"><h4 class="font-medium text-blue-800">CO₂ Saved</h4><p class="text-2xl font-bold text-blue-600">~200kg</p><p class="text-xs text-blue-700">Compared to conventional</p></div></div></div></div>
+        </div>
+    </div>
+
+    <!-- Floating buttons -->
+    <div class="fixed bottom-4 left-0 right-0 flex justify-center space-x-4 z-10">
+        <a href="transport.html" class="bg-secondary-600 hover:bg-secondary-700 text-white px-6 py-3 rounded-lg shadow-lg transition-all flex items-center"><i data-feather="bus"></i><span class="ml-2">Transport</span></a>
+        <a href="caption-ai.html" class="bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-lg shadow-lg transition-all flex items-center"><i data-feather="message-square"></i><span class="ml-2">Caption AI</span></a>
+        <a href="voice-generator.html" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg shadow-lg transition-all flex items-center"><i data-feather="mic"></i><span class="ml-2">Voice Plan</span></a>
+        <a href="waste-analysis.html" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg shadow-lg transition-all flex items-center"><i data-feather="activity"></i><span class="ml-2">Waste AI</span></a>
+    </div>
 </div>
 
-<div class="collapse-trigger" onclick="togglePanel()">Caption AI</div>
-<div id="sidePanel" class="side-panel">
-  <div class="side-panel-header">
-    <h2>Caption Generator</h2>
-    <button class="close-btn" onclick="togglePanel()">Close</button>
-  </div>
-  <div class="tab-container">
-    <button class="tab-btn active" onclick="switchTab('insta')">Instagram</button>
-    <button class="tab-btn" onclick="switchTab('twitter')">Twitter</button>
-    <button class="tab-btn" onclick="switchTab('linkedin')">LinkedIn</button>
-  </div>
-  <div id="insta" class="tab-content active">
-    <button class="quick-btn" onclick="generateCaption('insta')">Generate Caption</button>
-    <div id="instaOut" class="caption-output">Click to generate Instagram caption</div>
-    <button class="copy-btn" onclick="copyCaption('instaOut')">Copy</button>
-  </div>
-  <div id="twitter" class="tab-content">
-    <button class="quick-btn" onclick="generateCaption('twitter')">Generate Tweet</button>
-    <div id="twitterOut" class="caption-output">Click to generate tweet</div>
-    <button class="copy-btn" onclick="copyCaption('twitterOut')">Copy</button>
-  </div>
-  <div id="linkedin" class="tab-content">
-    <button class="quick-btn" onclick="generateCaption('linkedin')">Generate Post</button>
-    <div id="linkedinOut" class="caption-output">Click to generate LinkedIn post</div>
-    <button class="copy-btn" onclick="copyCaption('linkedinOut')">Copy</button>
-  </div>
-</div>
-
-<div class="bus-left-trigger" onclick="toggleBusPanel()">Buses</div>
-<div id="busPanel" class="bus-panel">
-  <div class="bus-header">
-    <h2>Public Transport</h2>
-    <button class="bus-close" onclick="toggleBusPanel()">Close</button>
-  </div>
-  <div id="busRoutesContainer"></div>
-  <button class="quick-btn" onclick="addCustomRoute()" style="margin-top:15px;background:var(--prime);color:white">+ Add Custom Route</button>
-</div>
-
+<!-- ===== SCRIPTS ===== -->
+<script>feather.replace();</script>
 <script>
-(function() {
-  'use strict';
-  const API_KEY = 'AIzaSyDIhRpfpg5waAWK5mORNiwP3eKq6IDFxm8';
-  const fileInput = document.getElementById('fileInput');
-  const imagePreview = document.getElementById('imagePreview');
-  const aiStatus = document.getElementById('aiStatus');
-  const planStatus = document.getElementById('planStatus');
-  const attInput = document.getElementById('att');
-
-  fileInput.addEventListener('change', async function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    aiStatus.textContent = 'Analyzing...';
-    aiStatus.className = 'status-msg info';
-    try {
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        imagePreview.src = e.target.result;
-        imagePreview.style.display = 'block';
+VANTA.WAVES({el: "#vanta-bg", color: 0x4db6ac, waveHeight: 20, shininess: 50, waveSpeed: 0.5, zoom: 0.8});
+/* === Quick-select buttons === */
+document.addEventListener('click', e => {
+  const btn = e.target.closest('.qs-btn');
+  if (!btn) return;
+  const val = btn.textContent.replace('+', '');
+  document.getElementById('att').value = val;
+});
+/* === AI Crowd Counter (TensorFlow) === */
+let model;
+async function loadModel() {
+  try {
+    model = await cocoSsd.load();
+    document.getElementById('crowdFile').addEventListener('change', async e => {
+      const file = e.target.files[0]; if (!file) return;
+      const preview = document.getElementById('aiCounterPreview');
+      const status  = document.getElementById('aiCounterStatus');
+      const reader  = new FileReader();
+      reader.onload = async ev => {
+        const img = new Image(); img.src = ev.target.result;
+        preview.innerHTML = `<img src="${ev.target.result}" class="w-full h-auto rounded-lg">`;
+        status.innerHTML = '<i data-feather="loader" class="animate-spin inline mr-2"></i> Analysing...'; feather.replace();
+        try {
+          const preds = await model.detect(img);
+          const people = preds.filter(p => p.class === 'person').length;
+          document.getElementById('att').value = people;
+          status.innerHTML = `<i data-feather="check-circle" class="inline mr-2"></i> Detected ${people} people`;
+        } catch (err) {
+          status.innerHTML = '<i data-feather="alert-circle" class="inline mr-2"></i> Detection failed';
+        }
+        feather.replace();
       };
       reader.readAsDataURL(file);
-      const base64 = await fileToBase64(file);
-      const base64Data = base64.split(',')[1];
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{
-            parts: [
-              { text: "Count exact number of people. Reply ONLY with the number." },
-              { inline_data: { mime_type: file.type, data: base64Data } }
-            ]
-          }]
-        })
-      });
-      if (!response.ok) throw new Error('API failed');
-      const data = await response.json();
-      const text = data.candidates[0].content.parts[0].text.trim();
-      const count = parseInt(text.match(/\d+/)?.[0] || '0');
-      if (count > 0) {
-        attInput.value = count;
-        aiStatus.textContent = `Detected ${count} people!`;
-        aiStatus.className = 'status-msg success';
-      } else {
-        aiStatus.textContent = 'No people detected';
-        aiStatus.className = 'status-msg error';
-      }
-    } catch (err) {
-      aiStatus.textContent = `Error: ${err.message}`;
-      aiStatus.className = 'status-msg error';
-    }
-  });
-
-  function fileToBase64(file) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
     });
+  } catch (err) {
+    console.error(err);
+    document.getElementById('aiCounterStatus').innerHTML = '<i data-feather="alert-triangle" class="inline mr-2"></i> Model failed';
+    feather.replace();
   }
-
-  window.setAttendees = function(num) {
-    attInput.value = num;
-    planStatus.textContent = `Set to ${num} attendees`;
-    planStatus.className = 'status-msg success';
-    setTimeout(() => { planStatus.textContent = ''; planStatus.className = 'status-msg'; }, 2000);
+}
+loadModel();
+/* === Waste-photo analyser (mock) === */
+document.getElementById('wasteFile').addEventListener('change', e => {
+  const file = e.target.files[0]; if (!file) return;
+  const preview = document.getElementById('wastePreview');
+  const status  = document.getElementById('wasteStatus');
+  const analysis= document.getElementById('wasteAnalysis');
+  const reader  = new FileReader();
+  reader.onload = ev => {
+    preview.innerHTML = `<img src="${ev.target.result}" class="w-full h-auto rounded-lg">`;
+    status.innerHTML = '<i data-feather="loader" class="animate-spin inline mr-2"></i> Analysing...'; feather.replace();
+    setTimeout(() => {
+      const bio = Math.floor(Math.random() * 30) + 70; // 70-100 %
+      const score = Math.min(100, bio + 10);
+      analysis.classList.remove('hidden');
+      analysis.querySelector('.bg-green-500').style.width = bio + '%';
+      analysis.querySelector('span:first-child').textContent = bio + '% Biodegradable';
+      analysis.querySelector('span:last-child').textContent  = (100 - bio) + '% Plastic/Non-recyclable';
+      analysis.querySelector('.text-3xl').textContent = score + '/100';
+      analysis.querySelector('.text-sm').textContent =
+        score >= 90 ? 'Outstanding!' : score >= 75 ? 'Excellent sustainability effort!' : 'Good job, room for improvement';
+      status.innerHTML = '<i data-feather="check-circle" class="inline mr-2"></i> Analysis complete';
+      feather.replace();
+    }, 1500);
   };
-
-  document.getElementById('genBtn').addEventListener('click', function(e) {
-    e.preventDefault();
-    const n = parseInt(attInput.value);
-    if (!n || n < 1) {
-      planStatus.textContent = 'Please enter valid attendees';
-      planStatus.className = 'status-msg error';
-      return;
-    }
-    const eventName = document.getElementById('ename').value.trim() || 'Your Event';
-    const mealType = document.getElementById('meal').value;
-    const hasOil = document.getElementById('oil').checked;
-    const hasLiquid = document.getElementById('liq').checked;
-    const plates = Math.ceil(n * 1.1);
-    const cups = hasLiquid ? Math.ceil(n * 1.15) : 0;
-    const napkins = Math.ceil(n * 1.2);
-    const oilBags = hasOil ? Math.ceil(n / 50) : 0;
-    const trashBags = Math.ceil(n / 100);
-    const compostBags = Math.ceil(n / 75);
-    const plateCost = (plates * 3).toFixed(2);
-    const cupCost = hasLiquid ? (cups * 2).toFixed(2) : 0;
-    const napkinCost = (napkins * 0.50).toFixed(2);
-    const totalCost = (parseFloat(plateCost) + parseFloat(cupCost) + parseFloat(napkinCost)).toFixed(2);
-    let plan = `✅ ZERO-WASTE PLAN GENERATED! 🌿\n\n`;
-    plan += `━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
-    plan += `📋 Event: ${eventName}\n`;
-    plan += `👥 Attendees: ${n} people\n`;
-    plan += `🍽️ Meal: ${mealType.charAt(0).toUpperCase() + mealType.slice(1)}\n`;
-    plan += `━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
-    plan += `📦 REQUIRED SUPPLIES:\n\n`;
-    plan += `🍽️ Compostable Plates: ${plates}\n   💰 Cost: ₹${plateCost}\n   ✓ 10% buffer\n\n`;
-    if (hasLiquid) {
-      plan += `☕ Compostable Cups: ${cups}\n   💰 Cost: ₹${cupCost}\n   ✓ 15% buffer\n\n`;
-    }
-    plan += `🧻 Napkins: ${napkins}\n   💰 Cost: ₹${napkinCost}\n   ✓ 20% buffer\n\n`;
-    if (hasOil) plan += `🛢️ Oil Bags: ${oilBags}\n\n`;
-    plan += `♻️ Compost Bags: ${compostBags}\n`;
-    plan += `🗑️ Recycling Bins: ${trashBags}\n\n`;
-    plan += `━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
-    plan += `💰 TOTAL: ₹${totalCost}\n`;
-    plan += `━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
-    plan += `🌱 TIPS:\n✓ Use banana leaves/areca plates\n✓ Steel tumblers for beverages\n✓ Set up labeled waste stations\n✓ Partner with composting facility\n\n`;
-    plan += `🌍 Every small step counts! 🌿`;
-    planStatus.textContent = plan;
-    planStatus.className = 'status-msg success';
-    planStatus.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  });
-})();
-
-function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
-const templates = {
-  insta: () => `🌿 Zero-Waste Event Success! 🎉\n\nJust planned sustainable event for ${randInt(50, 2000)} attendees in Tamil Nadu!\n\n✅ Banana leaf plates\n✅ Steel tumblers\n✅ Zero plastic\n\n${rand(["Together we save our planet! 🌍", "Small steps, big impact! 💚", "Sustainability is our duty! ♻️"])}\n\n#ZeroWaste #SustainableIndia #EcoFriendly #TamilNadu #GreenIndia #PlasticFreeIndia`,
-  twitter: () => `🌱 Zero-waste event in TN!\n\n${randInt(50, 2000)} attendees\n✅ Banana leaves\n✅ Steel tumblers\n✅ 100% compostable\n\n${rand(["Small steps → Big change 🌍", "Every event counts! 💚", "Green is cool ♻️"])}\n\n#ZeroWaste #SustainableIndia #GreenTN`,
-  linkedin: () => `🌿 Sustainable Event Success in Tamil Nadu\n\nOrganized zero-waste event for ${randInt(50, 2000)} attendees.\n\n📊 Results:\n• 100% plastic-free\n• Banana leaves & areca plates\n• Steel tumblers for beverages\n• 70% waste reduction\n• ₹${randInt(5000, 50000)} cost savings\n\nSustainability is economically smart! 🇮🇳\n\n#Sustainability #ZeroWaste #India #TamilNadu #GreenBusiness #ESG`
-};
-function generateCaption(p) {
-  const out = document.getElementById(p + 'Out');
-  out.textContent = 'Creating...';
-  setTimeout(() => { out.textContent = templates[p](); }, 300);
-}
-function copyCaption(id) {
-  navigator.clipboard.writeText(document.getElementById(id).textContent).then(() => alert('Copied!'));
-}
-function togglePanel() { document.getElementById('sidePanel').classList.toggle('open'); }
-function toggleBusPanel() { document.getElementById('busPanel').classList.toggle('open'); }
-function switchTab(p) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-  document.getElementById(p).classList.add('active');
-  event.target.classList.add('active');
-}
-
-// BUS ROUTES SYSTEM
-const defaultBusData = {
-  'Erode → Thudupathi': [
-    {time:'06:00 AM',bus:'12A'},{time:'07:15 AM',bus:'Swami'},{time:'07:50 AM',bus:'12B'},
-    {time:'01:30 PM',bus:'Swami'},{time:'03:20 PM',bus:'12D'},{time:'04:00 PM',bus:'12B'},
-    {time:'05:30 PM',bus:'Swami'},{time:'06:00 PM',bus:'12A'},{time:'06:45 PM',bus:'12B'}
-  ],
-  'Thudupathi → Erode': [
-    {time:'04:30 AM',bus:'12D'},{time:'06:10 AM',bus:'Swami'},{time:'06:55 AM',bus:'12A'},
-    {time:'08:40 AM',bus:'Dhanalaxmi'},{time:'09:00 AM',bus:'12B'},{time:'12:45 PM',bus:'Swami'},
-    {time:'04:30 PM',bus:'Swami'},{time:'05:10 PM',bus:'12B'},{time:'07:00 PM',bus:'12A'}
-  ],
-  'Perundurai → Thudupathi': [
-    {time:'05:15 AM',bus:'7D'},{time:'05:30 AM',bus:'37'},{time:'06:10 AM',bus:'P3'},
-    {time:'06:30 AM',bus:'Dhanalaxmi'},{time:'06:40 AM',bus:'7A'},{time:'07:40 AM',bus:'10A'},
-    {time:'08:10 AM',bus:'Swami'},{time:'09:30 AM',bus:'P3'},{time:'10:15 AM',bus:'7A'}
-  ],
-  'Thudupathi → Perundurai': [
-    {time:'10:30 AM',bus:'Swami'},{time:'10:50 AM',bus:'P3'},{time:'11:10 AM',bus:'7A'},
-    {time:'12:15 PM',bus:'P3'},{time:'01:00 PM',bus:'7A'},{time:'02:00 PM',bus:'P10A'},
-    {time:'03:05 PM',bus:'P3'},{time:'04:10 PM',bus:'12D'}
-  ]
-};
-
-// Load saved data or default, but always ensure default routes exist
-let busData = JSON.parse(localStorage.getItem('busRoutes')) || {};
-Object.keys(defaultBusData).forEach(route => {
-  if (!busData[route]) {
-    busData[route] = defaultBusData[route];
-  }
+  reader.readAsDataURL(file);
 });
-
-function renderBusRoutes() {
-  const container = document.getElementById('busRoutesContainer');
-  container.innerHTML = '';
-  
-  // Define order of routes (Custom Routes removed from defaults)
-  const routeOrder = ['Erode → Thudupathi', 'Thudupathi → Erode', 'Perundurai → Thudupathi', 'Thudupathi → Perundurai'];
-  const customRoutes = Object.keys(busData).filter(r => !routeOrder.includes(r));
-  const orderedRoutes = [...routeOrder, ...customRoutes].filter(r => busData[r]);
-  
-  orderedRoutes.forEach(routeName => {
-    const isDefault = routeOrder.includes(routeName);
-    const routeDiv = document.createElement('div');
-    routeDiv.className = 'bus-route';
-    routeDiv.innerHTML = `
-      <h3>${routeName} ${!isDefault ? `<button onclick="deleteRoute('${routeName}')" style="background:var(--danger);color:white;border:none;padding:4px 8px;border-radius:5px;cursor:pointer;font-size:0.8rem;float:right">Delete</button>` : ''}</h3>
-      <table class="bus-table">
-        <tr><th>Time</th><th>Bus</th></tr>
-        ${busData[routeName].map((item, idx) => `
-          <tr>
-            <td contenteditable="true" data-route="${routeName}" data-idx="${idx}" data-field="time">${item.time}</td>
-            <td contenteditable="true" data-route="${routeName}" data-idx="${idx}" data-field="bus">${item.bus}</td>
-          </tr>
-        `).join('')}
-      </table>
-      <button onclick="addBusToRoute('${routeName}')" style="background:var(--sec);color:var(--dark);border:none;padding:6px 12px;border-radius:5px;cursor:pointer;margin-top:8px;font-size:0.85rem">+ Add Bus</button>
-    `;
-    container.appendChild(routeDiv);
-  });
-  
-  // Add blur event to save edits
-  document.querySelectorAll('td[contenteditable="true"]').forEach(cell => {
-    cell.addEventListener('blur', function() {
-      const route = this.dataset.route;
-      const idx = parseInt(this.dataset.idx);
-      const field = this.dataset.field;
-      busData[route][idx][field] = this.textContent.trim();
-      saveBusData();
-    });
-  });
+/* === Zero-waste maths & generate plan === */
+const PRICE = {plate: 3, cup: 2, napkin: 0.5, bin: 650};
+function calcWaste() {
+  const n = Math.max(1, parseInt(document.getElementById('att').value) || 0);
+  const hasOil = document.getElementById('oil').checked;
+  const hasLiq = document.getElementById('liq').checked;
+  const plates = Math.ceil(n * 1.1);
+  const cups   = hasLiq ? Math.ceil(n * 1.15) : 0;
+  const napkins= Math.ceil(n * 1.2);
+  const oilBags= hasOil ? Math.ceil(n / 50) : 0;
+  const compost= Math.ceil(n / 75);
+  const recycle= Math.ceil(n / 100);
+  const costPlates = (plates * PRICE.plate).toFixed(2);
+  const costCups   = (cups   * PRICE.cup ).toFixed(2);
+  const costNapkin = (napkins* PRICE.napkin).toFixed(2);
+  const costBins   = (compost* PRICE.bin).toFixed(2);
+  const total = (parseFloat(costPlates)+parseFloat(costCups)+parseFloat(costNapkin)+parseFloat(costBins)).toFixed(2);
+  return {n, plates, cups, napkins, oilBags, compost, recycle, costPlates, costCups, costNapkin, costBins, total, hasOil, hasLiq};
 }
-
-function saveBusData() {
-  localStorage.setItem('busRoutes', JSON.stringify(busData));
-}
-
-function addCustomRoute() {
-  const routeName = prompt('Enter route name (e.g., "TNagar → Mylapore"):');
-  if (!routeName || routeName.trim() === '') return;
-  
-  const newRoute = routeName.trim();
-  
-  // Check if route already exists
-  if (busData[newRoute]) {
-    alert('Route already exists!');
-    return;
+document.getElementById('generateBtn').addEventListener('click', () => {
+  const w = calcWaste();
+  const ename = document.getElementById('ename').value || 'Unnamed Event';
+  const meal = document.getElementById('meal').value;
+  document.getElementById('resOverview').textContent = `${ename} for ${w.n} attendees (${meal})`;
+  document.getElementById('resSupplies').innerHTML = `
+    <li>Compostable plates: ${w.plates} (10 % buffer)</li>
+    ${w.cups?`<li>Compostable cups: ${w.cups} (15 % buffer)</li>`:''}
+    <li>Napkins: ${w.napkins} (20 % buffer)</li>
+    ${w.oilBags?`<li>Oil collection bags: ${w.oilBags}</li>`:''}
+    <li>Compost bins: ${w.compost} (1 per 75)</li>
+    <li>Recycling bins: ${w.recycle} (1 per 100)</li>`;
+  document.getElementById('resTotal').textContent = `Total: ₹${w.total}`;
+  document.getElementById('resBreak').innerHTML = `
+    <li class="flex justify-between"><span>Plates:</span><span>₹${w.costPlates}</span></li>
+    ${w.cups?`<li class="flex justify-between"><span>Cups:</span><span>₹${w.costCups}</span></li>`:''}
+    <li class="flex justify-between"><span>Napkins:</span><span>₹${w.costNapkin}</span></li>
+    <li class="flex justify-between"><span>Bins:</span><span>₹${w.costBins}</span></li>
+    <li class="flex justify-between font-medium border-t pt-1 mt-1"><span>Total:</span><span>₹${w.total}</span></li>`;
+  document.getElementById('results').classList.remove('hidden');
+  document.getElementById('results').scrollIntoView({behavior:'smooth'});
+});
+/* === Carbon footprint === */
+function calculateCarbonFootprint(attendees, mealType, hasOil) {
+  let emissions = 0;
+  switch(mealType) {
+    case 'Snacks Only': emissions = 0.2 * attendees; break;
+    case 'Breakfast': emissions = 0.5 * attendees; break;
+    case 'Lunch': emissions = 1.2 * attendees; break;
+    case 'Dinner': emissions = 1.5 * attendees; break;
+    case 'Full Day': emissions = 2.5 * attendees; break;
   }
-  
-  // Create new route with one default bus
-  busData[newRoute] = [{time: '08:00 AM', bus: 'Bus 1'}];
-  saveBusData();
-  renderBusRoutes();
+  if (hasOil) emissions += 0.3 * attendees;
+  const savings = emissions * 0.7;
+  return {conventional: emissions.toFixed(1), saved: savings.toFixed(1), net: (emissions - savings).toFixed(1)};
 }
-
-function deleteRoute(routeName) {
-  // Prevent deletion of default routes
-  const defaultRoutes = ['Erode → Thudupathi', 'Thudupathi → Erode', 'Perundurai → Thudupathi', 'Thudupathi → Perundurai'];
-  if (defaultRoutes.includes(routeName)) {
-    alert('Cannot delete default routes. You can only edit them or add new custom routes.');
-    return;
-  }
-  if (confirm(`Delete entire route "${routeName}"?`)) {
-    delete busData[routeName];
-    saveBusData();
-    renderBusRoutes();
-  }
+/* === Voice data restore === */
+const voiceData = localStorage.getItem('voiceGeneratedEvent');
+if (voiceData) {
+  const d = JSON.parse(voiceData);
+  document.getElementById('ename').value = d.eventName;
+  document.getElementById('att').value = d.attendees;
+  document.getElementById('meal').value = d.mealType;
+  document.getElementById('oil').checked = d.hasOil;
+  document.getElementById('liq').checked = d.hasLiquid;
+  localStorage.removeItem('voiceGeneratedEvent');
 }
-
-function addBusToRoute(routeName) {
-  const time = prompt('Enter departure time (e.g., 09:30 AM):') || '08:00 AM';
-  const bus = prompt('Enter bus name/number:') || 'Bus';
-  busData[routeName].push({time, bus});
-  saveBusData();
-  renderBusRoutes();
-}
-
-function deleteBus(routeName, idx) {
-  busData[routeName].splice(idx, 1);
-  saveBusData();
-  renderBusRoutes();
-}
-
-// Initialize bus routes on load
-window.addEventListener('DOMContentLoaded', renderBusRoutes);
 </script>
 </body>
 </html>
